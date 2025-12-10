@@ -24,20 +24,6 @@ typedef struct {
     size_t limit_read;  // Count of bytes to be read/displayed
 } options;
 
-// bad characters
-/**
- * @brief Array of control characters (0x00 through 0x1F) and the DEL character (0x7F).
- * These characters are considered non-printable or potentially harmful to terminal display 
- * and are replaced by a dot ('.') in the ASCII output column.
- */
-const unsigned char replace_with_dot[] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
-    0x7F
-};
-
 /**
  * @brief Reads a chunk of data from an open file handle into a dynamically allocated buffer.
  *
@@ -49,18 +35,20 @@ const unsigned char replace_with_dot[] = {
  * @param read_start Start Byte to read
  * @return const char* Pointer to the dynamically allocated buffer (must be freed by the caller).
  */
-const char *read_file_to_buffer(const char *filename, size_t *out_read, int buff_size, FILE *file, size_t read_start, size_t read_limit) {
-    char *buffer = malloc(buff_size);
+const char *read_file_to_buffer(size_t *out_read, int buff_size, FILE *file, size_t read_start, size_t read_limit) {
+    char *buffer = (char *)malloc(buff_size);
     
     // Comulative offset variable for file cursor
-    static bool offset_apply = false;
-    static size_t offset_continue = 0;
+    static bool offset_apply = false;   // If offset was firt time set -> true
     
     // Read bytes from file
     size_t read_buffer = 0;
 
     // Apply start_offset
-    if (!offset_apply) offset_continue += read_start;
+    if (!offset_apply) {
+        offset_apply = true;
+        fseek(file, read_start, SEEK_SET);
+    }
 
     if (!buffer) {
         perror("Cant allocate memory");
@@ -84,9 +72,6 @@ const char *read_file_to_buffer(const char *filename, size_t *out_read, int buff
 
     // Read filecontent to buffer, output read bytes
     read_buffer = fread(buffer, 1, to_read, file);
-
-    // Updates the static offset for the next sequential read.
-    offset_continue += read_buffer;
 
     *out_read = read_buffer;
     return buffer;
@@ -158,16 +143,16 @@ void print_hex(options *option){
     
     // Calculates the total length of the separating line based on buff_size and ASCII flag.
     int n = 0;
-    if (option->ascii == true) n = 16 + option->buff_size * 3 + option->buff_size; 
+    if (option->ascii == true) n = 18 + option->buff_size * 3 + option->buff_size; 
     else n = 10 + option->buff_size * 3;
     
     printf("\n");
     
     // Prints the horizontal separator line. Includes logic to place a '+' if ASCII is enabled.
     for (int i = 0; i < n; i++) {
-        if (option->ascii == true && i == 13 + option->buff_size * 3) {
+        if (option->ascii == true && i == 15 + option->buff_size * 3) {
             printf("+");
-            n -= 1; // Adjusts loop count to maintain overall length.
+            //n -= 1; // Adjusts loop count to maintain overall length.
         }
         printf("-");
     }
@@ -184,14 +169,14 @@ void print_hex(options *option){
     // --- Hex Output Loop ---
     do {
         // Reads data block by block using the helper function.
-        const char *buffer = read_file_to_buffer(option->filename, &bytes_read, option->buff_size, file, option->offset_read, option->limit_read);
+        const char *buffer = read_file_to_buffer(&bytes_read, option->buff_size, file, option->offset_read, option->limit_read);
         if (!buffer) break; // Should only happen if malloc fails and exit is avoided.
         if (bytes_read == 0) {
             break; // End of file reached.
         }
 
         // Prints the starting address of the current line (8-digit hex, padded).
-        printf("%08X | ", addr_display);
+        printf("%08zX | ", addr_display);
         
         
         // Output hex values (two digits, padded with 0, followed by a space).
@@ -200,37 +185,23 @@ void print_hex(options *option){
         }
 
         // Fills the line with spaces if the last read block was smaller than buff_size.
-        if (bytes_read < option->buff_size) {
+        if (bytes_read < (size_t)option->buff_size) {
             int n_spaces = (option->buff_size - bytes_read) * 3; // 3 characters per byte (XX ).
             printf("%*s", n_spaces, "");
         }
 
         // ASCII column layout
-        bool b_break = false; // Flag used inside the inner loop.
-        
         if (option->ascii == true) {
             printf("    |   "); // Separator for the ASCII view.
             
             // Iterates over the read bytes for ASCII output.
             for (size_t i = 0; i < bytes_read; i++) {
-                b_break = false;
-                
-                // Linear search: Checks if the current byte is in the 'replace_with_dot' list.
-                // NOTE: This O(N*M) approach is inefficient compared to a simple range check (0x00 < c < 0x20 || c == 0x7F).
-                for (size_t x = 0; x < sizeof(replace_with_dot); x++) {
-                    if (replace_with_dot[x] == buffer[i]) {
-                        printf(".");
-                        b_break = true;
-                    }
-                }
-                
-                // If not a bad character, print the ASCII representation.
-                if (!b_break) printf("%c", (char)buffer[i]);
+                if (buffer[i] < 32 || buffer[i] == 127) printf(".");
+                else printf("%c", buffer[i]);
             }
         }
 
         // Updates the display address for the next row. 
-        // NOTE: Using option->buff_size here is correct for continuous display address tracking,
         // even if the last read was shorter.
         addr_display += option->buff_size; 
         printf("\n");
@@ -255,7 +226,7 @@ void print_hex(options *option){
  */
 options *get_options(int argc, char *argv[]) {
     // Allocate memory for options structure.
-    options *option = malloc(sizeof(options));
+    options *option = (options *) malloc(sizeof(options));
     if (!option) {
         perror("Cant malloc options");
         exit(EXIT_FAILURE);
@@ -269,13 +240,15 @@ options *get_options(int argc, char *argv[]) {
     option->limit_read = 0;
 
     // Help message string.
-    char *help = "Usage:"
+    char help[] = "\nUsage:"
                  "\n  (-f) : <filename>"
                  "\n    -b : Buffer <bytes>                  (default = 16)"
                  "\n    -a : Show ASCII-Table <on/off>       (default = on)"
                  "\n    -o : Offset to start reading <bytes> (default = 0)"
                  "\n    -l : Limit to stop reading <bytes>   (default = EOF)"
-                 "\n    -h : Show this info\n";
+                 "\n    -h : Show this info\n\n";
+
+    char help_short[] = "See -h for more information\n";
     
     // Loop through command line arguments starting from index 1.
     for (int x = 1; x < argc; x++) {
@@ -294,7 +267,7 @@ options *get_options(int argc, char *argv[]) {
             // Buffer size argument parsing.
             if (x + 1 >= argc) {
                 fprintf(stderr, "Error: -b requires an argument\n");
-                printf("%s", help);
+                printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
 
@@ -305,7 +278,7 @@ options *get_options(int argc, char *argv[]) {
 
             if (endptr == argv[x + 1]) {
                 fprintf(stderr, "Error: -b requires a numeric value\n");
-                printf("%s", help);
+                printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
             if (errno == ERANGE || val <= 0) {
@@ -321,7 +294,7 @@ options *get_options(int argc, char *argv[]) {
             // ASCII flag toggle argument.
             if (x + 1 >= argc) {
                 fprintf(stderr, "Error: -a requires an argument\n");
-                printf("%s", help);
+                printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
             else{
@@ -338,7 +311,7 @@ options *get_options(int argc, char *argv[]) {
                 // Invalid value provided.
                 else {
                     printf("Invalid argument -a <%s>\n", argv[x + 1]);
-                    printf("%s", help);
+                    printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
             }
@@ -348,7 +321,7 @@ options *get_options(int argc, char *argv[]) {
             // Offset Flag
             if (x + 1 >= argc) {
                 fprintf(stderr, "Error: -o requires an argument\n");
-                printf("%s", help);
+                printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
             else {
@@ -359,14 +332,14 @@ options *get_options(int argc, char *argv[]) {
                 // Check for existing argument
                 if (endptr == argv[x + 1]) {
                     fprintf(stderr, "Error: -o requires a numeric value\n");
-                    printf("%s", help);
+                    printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
 
                 // Check for bad characters
                 if (*endptr != '\0' && !isspace((unsigned char)*endptr)) {
                     fprintf(stderr, "Error: -o contains invalid characters\n");
-                    printf("%s", help);
+                    printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
 
@@ -392,7 +365,7 @@ options *get_options(int argc, char *argv[]) {
             // Limit Flag
             if (x + 1 >= argc) {
                 fprintf(stderr, "Error: -l requires an argument\n");
-                printf("%s", help);
+                printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
             else {
@@ -403,14 +376,14 @@ options *get_options(int argc, char *argv[]) {
                 // Check for existing argument
                 if (endptr == argv[x + 1]) {
                     fprintf(stderr, "Error: -l requires a numeric value\n");
-                    printf("%s", help);
+                    printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
 
                 // Check for bad characters
                 if (*endptr != '\0' && !isspace((unsigned char)*endptr)) {
                     fprintf(stderr, "Error: -l contains invalid characters\n");
-                    printf("%s", help);
+                    printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
 
@@ -426,7 +399,7 @@ options *get_options(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
                 // Check for higher value than offset
-                if (val < option->offset_read) {
+                if (val < (long) option->offset_read) {
                     fprintf(stderr, "Error: limit must be greater than offset\n");
                     exit(EXIT_FAILURE);
                 }
@@ -446,14 +419,14 @@ options *get_options(int argc, char *argv[]) {
 
         else {
             // Unrecognized argument leads to help display and exit.
-            printf("%s", help);
+            printf("%s", help_short);
             exit(EXIT_SUCCESS);
         }
     }
 
     // Final validation: Ensure a filename was provided.
     if(option->filename == NULL) {
-        printf("No valid filename");
+        printf("No valid filename\n");
         exit(EXIT_FAILURE);
     }
 
