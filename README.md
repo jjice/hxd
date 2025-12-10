@@ -37,7 +37,7 @@ gcc src/hxd.c -o build/hxd
 The utility is run from the command line and takes exactly one argument.
 
 ```bash
-./hxd <file_path>
+hxd <file>
 ```
 
 ### Arguments
