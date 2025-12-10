@@ -15,11 +15,21 @@
 To compile the program, you need a C compiler like `gcc` or `clang`.
 
 ```bash
-# Using GCC
-gcc hxd.c -o hxd
+# Using cmake
+cmake
 
-# Or using Clang
-clang hxd.c -o hxd
+cd build/
+
+make
+
+sudo make install
+
+# Or just as a standalone bin using Clang / GCC
+mkdir build
+
+clang src/hxd.c -o build/hxd
+# or
+gcc src/hxd.c -o build/hxd
 ```
 
 ## 🚀 Usage
