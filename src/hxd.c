@@ -172,6 +172,7 @@ void print_hex(options *option){
         const char *buffer = read_file_to_buffer(&bytes_read, option->buff_size, file, option->offset_read, option->limit_read);
         if (!buffer) break; // Should only happen if malloc fails and exit is avoided.
         if (bytes_read == 0) {
+            free((void *) buffer);
             break; // End of file reached.
         }
 
@@ -209,8 +210,8 @@ void print_hex(options *option){
         // Release the memory allocated in read_file_to_buffer.
         free((void*)buffer);
 
-    } while (bytes_read > 0);
-    
+    } while (1);
+
     printf("\n");
     // Closes the file handle opened at the beginning of print_hex.
     fclose(file);
