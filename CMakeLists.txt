@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
+project(hxd LANGUAGES C)
 project(hxd VERSION 0.1)
 add_executable(hxd src/hxd.c)
 install(TARGETS hxd DESTINATION bin)
+add_compile_options(-std=c11)
