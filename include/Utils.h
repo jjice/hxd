@@ -25,6 +25,17 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#ifdef _WIN32
+    // Windows nutzt Unterstriche für diese POSIX-Funktionen
+    #define popen _popen
+    #define pclose _pclose
+    
+    // Verhindert die Warnung wegen fopen
+    #ifndef _CRT_SECURE_NO_WARNINGS
+        #define _CRT_SECURE_NO_WARNINGS
+    #endif
+#endif
+
 static inline void print_color(const char* color_code, bool enable_color) {
     if (enable_color) {
         printf("%s", color_code);
