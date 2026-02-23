@@ -10,9 +10,15 @@
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
-#include <unistd.h>
 #include "Args.h"
 
+#ifdef _WIN32
+    #include <io.h>
+    #define isatty _isatty
+    #define fileno _fileno
+#else
+    #include <unistd.h>
+#endif
 
 /**
  * @brief Parses command line arguments and initializes the options structure.

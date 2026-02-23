@@ -1,24 +1,46 @@
-name: C/C++ CI
+name: Cross-Platform Build
 
 on: [push, pull_request]
 
 jobs:
   build:
+    name: Build on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - name: Ubuntu
+            os: ubuntu-latest
+          - name: MacOS
+            os: macos-latest
+          - name: Windows
+            os: windows-latest
+          - name: ArchLinux
+            os: ubuntu-latest
+            container: archlinux:latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Configure CMake
-      run: cmake -B build -S .
+    - name: Install Dependencies (Linux/Arch)
+      run: |
+        if command -v pacman &> /dev/null; then
+          pacman -Syu --noconfirm base-devel cmake
+        elif command -v apt-get &> /dev/null; then
+          sudo apt-get update && sudo apt-get install -y build-essential cmake
+        fi
 
-    - name: Build
-      run: cmake --build build --config Release
+    - name: Configure and Build
+      run: |
+        cmake -B build -S .
+        cmake --build build --config Release
 
-    - name: Run Basic Test
+    - name: Test
       shell: bash
       run: |
-        ./build/hxd --help || echo "Help command failed"
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          ./build/Release/hxd.exe --help
+        else
+          ./build/hxd --help
+        fi
