@@ -45,10 +45,16 @@ jobs:
     - name: Run Basic Test
       shell: bash
       run: |
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          # Windows legt die .exe oft in Release/ ab
-          ./build/Release/hxd.exe --help || ./build/hxd.exe --help
-        else
-          # Linux/macOS
-          ./build/hxd --help
+        # Wir suchen rekursiv im build-Ordner nach der hxd Datei
+        # und machen sie ausführbar (wichtig für Linux/macOS)
+        TARGET=$(find build -name "hxd" -o -name "hxd.exe" | head -n 1)
+        
+        if [ -z "$TARGET" ]; then
+          echo "FEHLER: hxd wurde nirgendwo im build-Ordner gefunden!"
+          ls -R build
+          exit 1
         fi
+        
+        echo "Gefundene Datei: $TARGET"
+        chmod +x "$TARGET"
+        "$TARGET" --help
