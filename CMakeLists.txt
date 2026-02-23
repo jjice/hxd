@@ -3,6 +3,7 @@ project(hxd LANGUAGES C VERSION 0.2)
 
 # Clangd-Support für IDEs
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # 1. TARGET DEKLARIEREN
 add_executable(hxd 
