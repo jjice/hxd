@@ -1,0 +1,51 @@
+name: Create Release Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: hxd-linux
+            asset_name: hxd-linux-amd64.tar.gz
+          - os: windows-latest
+            artifact_name: hxd-windows
+            asset_name: hxd-windows-amd64.zip
+          - os: macos-latest
+            artifact_name: hxd-macos
+            asset_name: hxd-macos-arm64.tar.gz
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure and Build
+      run: |
+        cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release
+
+    - name: Package (Linux/MacOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        tar -czf ../${{ matrix.asset_name }} hxd
+
+    - name: Package (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        cd build/Release
+        Compress-Archive -Path hxd.exe -DestinationPath ../../${{ matrix.asset_name }}
+
+    - name: Upload Binaries to Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ matrix.asset_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
