@@ -1,3 +1,5 @@
+[![C/C++ CI](https://github.com/jjice/hxd/actions/workflows/ci.yml/badge.svg)](https://github.com/jjice/hxd/actions/workflows/ci.yml)
+
 # hxd - A Simple Hex Dump Utility 📂
 
 `hxd` is a small command-line tool written in C that displays the content of a file in a classic hex dump format. For each line, it outputs the offset, the hexadecimal representation of the bytes, and the corresponding printable ASCII characters.
