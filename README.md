@@ -1,9 +1,7 @@
-| Platform | Status |
-| :--- | :--- |
-| **Arch Linux** | [![Arch](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Arch%20Linux&logo=arch-linux&logoColor=white)](https://github.com/jjice/hxd/actions) |
-| **Ubuntu** | [![Ubuntu](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Ubuntu&logo=ubuntu&logoColor=white)](https://github.com/jjice/hxd/actions) |
-| **Windows** | [![Windows](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Windows&logo=windows&logoColor=white)](https://github.com/jjice/hxd/actions) |
-| **macOS** | [![macOS](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=macOS&logo=apple&logoColor=white)](https://github.com/jjice/hxd/actions) |
+[![Arch Linux](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Arch%20Linux&logo=arch-linux&logoColor=white)](https://github.com/jjice/hxd/actions)
+[![Ubuntu](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Ubuntu&logo=ubuntu&logoColor=white)](https://github.com/jjice/hxd/actions)
+[![Windows](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Windows&logo=windows&logoColor=white)](https://github.com/jjice/hxd/actions)
+[![macOS](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=macOS&logo=apple&logoColor=white)](https://github.com/jjice/hxd/actions)
 
 # hxd - A Simple Hex Dump Utility 📂
 
