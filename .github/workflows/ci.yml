@@ -23,24 +23,32 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Abhängigkeiten installieren (Nur auf Linux-Systemen)
     - name: Install Dependencies (Linux/Arch)
+      if: runner.os == 'Linux'
       run: |
         if command -v pacman &> /dev/null; then
           pacman -Syu --noconfirm base-devel cmake
-        elif command -v apt-get &> /dev/null; then
+        else
           sudo apt-get update && sudo apt-get install -y build-essential cmake
         fi
 
-    - name: Configure and Build
-      run: |
-        cmake -B build -S .
-        cmake --build build --config Release
+    # Konfigurieren (Plattformunabhängig über CMake)
+    - name: Configure CMake
+      run: cmake -B build -S .
 
-    - name: Test
+    # Build (Plattformunabhängig über CMake)
+    - name: Build
+      run: cmake --build build --config Release
+
+    # Test-Schritt mit korrekten Pfaden
+    - name: Run Basic Test
       shell: bash
       run: |
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          ./build/Release/hxd.exe --help
+          # Windows legt die .exe oft in Release/ ab
+          ./build/Release/hxd.exe --help || ./build/hxd.exe --help
         else
+          # Linux/macOS
           ./build/hxd --help
         fi
