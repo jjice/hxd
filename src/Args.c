@@ -1,3 +1,10 @@
+/*
+ * hxd - A modern hex dumper
+ * Copyright (c) 2026 Joshua Jallow
+ * Licensed under the MIT License.
+ * See LICENSE file in the project root for full license information.
+ */
+
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -30,14 +37,19 @@ options *get_options(int argc, char *argv[]) {
     option->offset_read = 0;
     option->limit_read = 0;
     option->pipeline = false;
+    option->color = true;
+    option->pager = false;
 
     // Help message string.
-    char help[] = "\nUsage:"
-                 "\n  (-f) : <filename>"
-                 "\n    -b : Buffer <bytes>                  (default = 16)"
-                 "\n    -a : Show ASCII-Table <on/off>       (default = on)"
-                 "\n    -o : Offset to start reading <bytes> (default = 0)"
-                 "\n    -l : Limit to stop reading <bytes>   (default = EOF)"
+    char help[] = "\nUsage:\n"
+                 "\n  (-f) : <filename>                        (-f is optional)"
+                 "\n    -b : Linewidth <bytes>                 (default = 16)"
+                 "\n    -a : Show ASCII-Table <on/off>         (default = on)"
+                 "\n    -o : Offset to start reading <bytes>   (default = 0)"
+                 "\n    -l : Limit to stop reading <bytes>     (default = EOF)"
+                 "\n    -c : Enable colored output <on/off>    (default = on)"
+                 "\n    -p : Enable pager output <on/off>      (default = off)"
+                 "\n              more <win> less <linux>\n"
                  "\n    -h : Show this info\n\n";
 
     char help_short[] = "See -h for more information\n";
@@ -201,6 +213,60 @@ options *get_options(int argc, char *argv[]) {
                 x++; // Skip the argument value.
             }
             
+        }
+
+        else if(strcmp(argv[x], "-c") == 0){
+            // ASCII flag toggle argument.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: -c requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            else{
+                // Check for "on"
+                if (strcmp("on", argv[x + 1]) == 0) {
+                    option->color = true;
+                    x++;
+                }
+                // Check for "off"
+                else if (strcmp("off", argv[x + 1]) == 0) {
+                    option->color = false;
+                    x++;
+                }
+                // Invalid value provided.
+                else {
+                    printf("Invalid argument -c <%s>\n", argv[x + 1]);
+                    printf("%s", help_short);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+        else if(strcmp(argv[x], "-p") == 0){
+            // ASCII flag toggle argument.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: -p requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            else{
+                // Check for "on"
+                if (strcmp("on", argv[x + 1]) == 0) {
+                    option->pager = true;
+                    x++;
+                }
+                // Check for "off"
+                else if (strcmp("off", argv[x + 1]) == 0) {
+                    option->pager = false;
+                    x++;
+                }
+                // Invalid value provided.
+                else {
+                    printf("Invalid argument -p <%s>\n", argv[x + 1]);
+                    printf("%s", help_short);
+                    exit(EXIT_FAILURE);
+                }
+            }
         }
 
         else if(strcmp(argv[x], "-h") == 0){

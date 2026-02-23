@@ -1,3 +1,10 @@
+/*
+ * hxd - A modern hex dumper
+ * Copyright (c) 2026 Joshua Jallow
+ * Licensed under the MIT License.
+ * See LICENSE file in the project root for full license information.
+ */
+
 #ifndef ARGS_H
 #define ARGS_H
 
@@ -17,6 +24,8 @@ typedef struct {
     size_t offset_read; // Bytes to skip until print
     size_t limit_read;  // Count of bytes to be read/displayed
     bool pipeline;      // Flag to determine if a pipeline is active (bypass check_file)
+    bool color;         // Flag to determine if colored output is enabled
+    bool pager;         // Flag to determine if output should be sent to a pager (e.g., less)
 } options;
 
 options *get_options(int argc, char *argv[]);

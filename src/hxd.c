@@ -1,3 +1,10 @@
+/*
+ * hxd - A modern hex dumper
+ * Copyright (c) 2026 Joshua Jallow
+ * Licensed under the MIT License.
+ * See LICENSE file in the project root for full license information.
+ */
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,9 +13,12 @@
 #include "Utils.h"
 #include "Args.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 /** 
  * This documentation has been generated with ai. Use with caution!
- * @author jjice <joshuajallow1@gmail.com>
  */
 
 
@@ -23,30 +33,25 @@
  * @param read_start Start Byte to read
  * @return const char* Pointer to the dynamically allocated buffer (must be freed by the caller).
  */
-const char *read_stream_to_buffer(size_t *out_read, int buff_size, FILE *file, size_t read_start, size_t read_limit) {
-    char *buffer = (char *)malloc(buff_size);
+
+#define MAX_BUFF_SIZE 16384
+static unsigned char buffer[16384] = {0}; // Static buffer to avoid dynamic allocation overhead. Size is MAX_BUFF_SIZE.
+
+void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t read_limit) {
     
     if (file == stdin) {
         // Bei stdin: Offset ignorieren, einfach lesen 
-        *out_read = fread(buffer, 1,  buff_size, file);
-        return buffer;
+        *out_read = fread(buffer, 1,  MAX_BUFF_SIZE, file);
+        return;
     }
     
     // Comulative offset variable for file cursor
     static bool offset_apply = false;   // If offset was firt time set -> true
-    
-    // Read bytes from file
-    size_t read_buffer = 0;
 
     // Apply start_offset
     if (!offset_apply) {
         offset_apply = true;
         fseek(file, read_start, SEEK_SET);
-    }
-
-    if (!buffer) {
-        perror("Cant allocate memory");
-        exit(EXIT_FAILURE);
     }
 
     // Current File cursor position
@@ -62,13 +67,11 @@ const char *read_stream_to_buffer(size_t *out_read, int buff_size, FILE *file, s
     }
 
     // If remaining is smaller than buff_size: read remaining else read buffsize
-    size_t to_read = remaining < (size_t)buff_size ? remaining : (size_t)buff_size;
+    size_t to_read = remaining < (size_t)MAX_BUFF_SIZE ? remaining : (size_t)MAX_BUFF_SIZE;
 
     // Read filecontent to buffer, output read bytes
-    read_buffer = fread(buffer, 1, to_read, file);
-
-    *out_read = read_buffer;
-    return buffer;
+    *out_read = fread(buffer, 1, to_read, file);
+    return;
 }
 
 /**
@@ -121,15 +124,26 @@ void check_file(options *option) {
  * @param option Pointer to the configured options structure.
  */
 void print_hex(options *option){
-    size_t bytes_read = 0;       // Bytes read in last read_file_to_buffer call.
-    size_t addr_display = 0;     // Starting memory address to display for the current row.
+
+    FILE *out = stdout; // Standardmäßig normaler Output
+
+    if (option->pager) {
+        out = open_pager();
+    }
+
+    #define printf(...) fprintf(out, __VA_ARGS__)
+
+    int bytes_read = 0;      // Bytes read in last read_file_to_buffer call.
+    int addr_display = 0;    // Starting memory address to display for the current row.
     
     // Apply starting addr
     addr_display += option->offset_read;
 
     // --- Header Formatting ---
+    print_color(HEADER_COLOR, option->color);
     if (option->pipeline) printf("\nHexdump for <pipe>:\n\n");
     else printf("\nHexdump for <%s>:\n\n", option->filename);
+    print_color(RESET, option->color);
     
     // Prints spaces to align column headers with the hex data area.
     printf("%*s", 11, " ");
@@ -167,64 +181,83 @@ void print_hex(options *option){
     else {
         file = fopen(option->filename, "rb");
         if (!file) {
-            perror("Cant open file");
+            perror("Cant open file / No accsess to pipeline");
             exit(EXIT_FAILURE);
         }
     }
     
 
     // --- Hex Output Loop ---
-    do {
-        // Reads data block by block using the helper function.
-        const char *buffer = read_stream_to_buffer(&bytes_read, option->buff_size, file, option->offset_read, option->limit_read);
-        if (!buffer) break; // Should only happen if malloc fails and exit is avoided.
-        if (bytes_read == 0) {
-            free((void *) buffer);
-            break; // End of file reached.
-        }
+    while (1) {
+        read_stream_to_buffer(&bytes_read, file, option->offset_read, option->limit_read);
+        if (bytes_read == 0) break;
 
-        // Prints the starting address of the current line (8-digit hex, padded).
-        printf("%08zX | ", addr_display);
-        
-        
-        // Output hex values (two digits, padded with 0, followed by a space).
-        for (size_t i = 0; i < bytes_read; i++) {
-            printf("%02x ", (unsigned char)buffer[i]);
-        }
-
-        // Fills the line with spaces if the last read block was smaller than buff_size.
-        if (bytes_read < (size_t)option->buff_size) {
-            int n_spaces = (option->buff_size - bytes_read) * 3; // 3 characters per byte (XX ).
-            printf("%*s", n_spaces, "");
-        }
-
-        // ASCII column layout
-        if (option->ascii == true) {
-            printf("    |   "); // Separator for the ASCII view.
-            
-            // Iterates over the read bytes for ASCII output.
-            for (size_t i = 0; i < bytes_read; i++) {
-                if (buffer[i] < 32 || buffer[i] == 127) printf(".");
-                else printf("%c", buffer[i]);
+        int processed = 0;
+        while (processed < bytes_read) {
+            int current_line_len = option->buff_size;
+            if (processed + current_line_len > bytes_read) {
+                current_line_len = bytes_read - processed;
             }
+
+            // 1. Adresse drucken
+            print_color(ADDR_COLOR, option->color);
+            printf("%08X", addr_display);
+            print_color(RESET, option->color);
+            printf(" | ");
+
+            // 2. Hex-Werte drucken mit padding
+            print_color(HEX_VAL_COLOR, option->color);
+            for (int i = 0; i < option->buff_size; i++) {
+                if (i < current_line_len) {
+
+                    if (buffer[processed + i] == 0) {
+                        print_color(NULL_BYTE_COLOR, option->color);
+                    }
+                    else if (buffer[processed + i] >= 32 && buffer[processed + i] < 127) {
+                        print_color(ASCII_COLOR, option->color);
+                    }
+                    else print_color(NON_PRINT_COLOR, option->color);
+                    printf("%02x ", buffer[processed + i]);
+                } else {
+                    printf("   ");
+                }
+            }
+            print_color(RESET, option->color);
+
+            // 3. ASCII-Teil
+            if (option->ascii) {
+                printf("    |   ");
+                for (int i = 0; i < current_line_len; i++) {
+                    unsigned char c = buffer[processed + i];
+
+                    if (c == 0) {
+                        print_color(NULL_BYTE_COLOR, option->color);
+                        printf(".");
+                    } 
+                    else if (c < 32 || c >= 127) {
+                        print_color(NON_PRINT_COLOR, option->color);
+                        printf(".");
+                    } 
+                    else {
+                        print_color(ASCII_COLOR, option->color);
+                        printf("%c", c);
+                    }
+                    print_color(RESET, option->color);
+                }
+            }
+
+            printf("\n");
+
+            addr_display += current_line_len; // Oder + buff_size, je nach Wunsch
+            processed += current_line_len;
         }
-
-        // Updates the display address for the next row. 
-        // even if the last read was shorter.
-        addr_display += option->buff_size; 
-        printf("\n");
-        
-        // Release the memory allocated in read_file_to_buffer.
-        free((void*)buffer);
-
-    } while (1);
+    }
 
     printf("\n");
     // Closes the file handle opened at the beginning of print_hex.
     if (!option->pipeline) fclose(file);
+    #undef printf // Wichtig: Am Ende der Funktion das Makro wieder löschen
 }
-
-
 
 /**
  * @brief Main entry point of the program.
@@ -234,6 +267,12 @@ void print_hex(options *option){
  * @return int Exit status.
  */
 int main(int argc, char *argv[]) {
+    #ifdef _WIN32
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD dwMode = 0;
+        GetConsoleMode(hOut, &dwMode);
+        SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    #endif
 
     // 1. Parse command line arguments.
     options *option = get_options(argc, argv);
@@ -246,5 +285,6 @@ int main(int argc, char *argv[]) {
 
     // 4. Clean up allocated memory for options structure.
     free(option);
+    print_color(RESET, true);
     return EXIT_SUCCESS;
 }
