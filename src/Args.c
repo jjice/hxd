@@ -6,6 +6,7 @@
  */
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
@@ -47,6 +48,8 @@ options *get_options(int argc, char *argv[]) {
     option->color = true;
     option->color = true;
     option->pager = false;
+    option->entropie = false;
+    option->string = false;
 
     // Help message string.
     static const char *help =
@@ -68,6 +71,7 @@ options *get_options(int argc, char *argv[]) {
         "  -c,  --color   <on|off>           Enable syntax highlighting / colors (default: on)\n"
         "  -s,  --string  <on|off>           Enable string highlighting / strings (default: off)\n"
         "  -p,  --pager   <on|off>           Pipe output through pager (more/less) (default: off)\n"
+        "  -e,  --entropy <on|off>           Show entropy graph per line (default: off)\n"
         "  -h,  --help                       Show this help message and exit\n"
         "\n"
         "Examples:\n"
@@ -358,16 +362,43 @@ options *get_options(int argc, char *argv[]) {
             }
         }
 
+        else if (strcmp(argv[x], "-e") == 0 || (strcmp(argv[x], "--entropy") == 0)){
+            // Entropy flag toggle argument.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: entropy requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            else{
+                // Check for "on"
+                if (strcmp("on", argv[x + 1]) == 0) {
+                    option->entropie = true;
+                    x++;
+                }
+                // Check for "off"
+                else if (strcmp("off", argv[x + 1]) == 0) {
+                    option->entropie = false;
+                    x++;
+                }
+                // Invalid value provided.
+                else {
+                    printf("Invalid argument for entropy <%s>\n", argv[x + 1]);
+                    printf("%s", help_short);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
         else if (strcmp(argv[x], "-h") == 0 || (strcmp(argv[x], "--help") == 0)) {
             // Help flag.
             printf("%s", help);
-            exit(EXIT_FAILURE);
+            exit(EXIT_SUCCESS);
         }
 
         else {
             // Unrecognized argument leads to help display and exit.
             printf("%s", help_short);
-            exit(EXIT_SUCCESS);
+            exit(EXIT_FAILURE);
         }
     }
 

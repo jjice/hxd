@@ -1,51 +1,47 @@
-name: Create Release Packages
+name: Production Release
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # Startet nur, wenn ein Tag wie v1.0.0 gepusht wird
 
 jobs:
-  build:
-    name: Build for ${{ matrix.os }}
+  build_and_release:
+    name: Build & Release for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: hxd-linux
-            asset_name: hxd-linux-amd64.tar.gz
+            asset_name: hxd-linux-x64
           - os: windows-latest
-            artifact_name: hxd-windows
-            asset_name: hxd-windows-amd64.zip
+            asset_name: hxd-windows-x64.exe
           - os: macos-latest
-            artifact_name: hxd-macos
-            asset_name: hxd-macos-arm64.tar.gz
+            asset_name: hxd-macos-arm64
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Wichtig für das automatische Changelog
 
-    - name: Configure and Build
-      run: |
-        cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-        cmake --build build --config Release
+      - name: Configure and Build
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
 
-    - name: Package (Linux/MacOS)
-      if: runner.os != 'Windows'
-      run: |
-        cd build
-        tar -czf ../${{ matrix.asset_name }} hxd
+      - name: Prepare Artifact
+        shell: bash
+        run: |
+          # Findet die Binary egal wo sie liegt (unser bewährter Trick)
+          TARGET=$(find build -name "hxd" -o -name "hxd.exe" | head -n 1)
+          cp "$TARGET" ./${{ matrix.asset_name }}
 
-    - name: Package (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        cd build/Release
-        Compress-Archive -Path hxd.exe -DestinationPath ../../${{ matrix.asset_name }}
-
-    - name: Upload Binaries to Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ${{ matrix.asset_name }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset_name }}
+          generate_release_notes: true # DAS erstellt das automatische Changelog!
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

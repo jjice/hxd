@@ -28,15 +28,19 @@ Testing:
 Magic-Bytes-Erkennung:
     MagicTable hinzugefügt, es fehlt noch die Prüfung und ausgabe des Dateiformates.
 
-String-Highlighting:
+✅String-Highlighting:
     Argument und option wurde hinzugefügt. Es fehlt noch die Erkennung.
 
 Live-Preview (--follow)
 
-Heatmap:
+✅Heatmap:
     Argument-Logik implmentiert
+    None implmentiert
+    adaptiv implmentiert
+    fixed implmentiert
 
+Bytesize suffix hinzugefügen
 
-Entropie (darstellen pro zeile als heatmap für jedes Zeichen)
+✅Entropie (darstellen pro zeile als heatmap für jedes Zeichen)
 
 Vergleichsmodus

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
-project(hxd LANGUAGES C VERSION 0.2)
+project(hxd LANGUAGES C VERSION 1.0.0)
+configure_file(include/version.h.in include/version.h)
 
 # Clangd-Support für IDEs
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

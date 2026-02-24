@@ -14,7 +14,7 @@
 #define DIM             "\x1b[2m"  // Sehr nützlich für Unwichtiges!
 
 // "Modern UI" Farben (Helle Varianten wirken oft sauberer)
-#define NON_PRINT_COLOR "\x1b[38;5;179m"  // Grey / Bright Black (Für Punkte oder 00er Werte)
+#define NON_PRINT_COLOR "\x1b[38;5;58m"  // Grey / Bright Black (Für Punkte oder 00er Werte)
 #define NULL_BYTE_COLOR "\x1b[38;5;8m"  // Standard Blau (meist recht dunkel)
 #define ADDR_COLOR      "\x1b[38;5;214m"  // Bright Blue (Für die Adressspalte links)
 #define HEX_VAL_COLOR   "\x1b[38;5;95m"  // Bright White (Die eigentlichen Daten)
@@ -39,6 +39,8 @@ static const char *heatmap_colors[16] = {
     "\x1b[38;5;202m",
     "\x1b[38;5;196m"   // 15
 };
+
+#define INDEX_MAP(value, min, max) (int) (((float)(value - min) / (float)(max - min)) * 15.0 + 0.5)
 
 #include <stdio.h>
 #include <stdbool.h>

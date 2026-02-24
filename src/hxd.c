@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 #include "Utils.h"
 #include "Args.h"
 #include "MagicBytes.h"
@@ -31,7 +32,7 @@
  *
  * @param filename File path (ignored, as the FILE* handle is already passed).
  * @param out_read Pointer to store the actual number of bytes read.
- * @param buff_size The maximum buffer size to read.
+ * @param buff_size The _maximum buffer size to read.
  * @param file The already opened FILE* handle.
  * @param read_start Start Byte to read
  * @return const char* Pointer to the dynamically allocated buffer (must be freed by the caller).
@@ -48,12 +49,12 @@ void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t 
         return;
     }
     
-    // Comulative offset variable for file cursor
-    static bool offset_apply = false;   // If offset was firt time set -> true
+    // Track the last read_start position to detect when we need to fseek
+    static size_t last_read_start = (size_t)-1;
 
-    // Apply start_offset
-    if (!offset_apply) {
-        offset_apply = true;
+    // Apply start_offset only if read_start has changed
+    if (last_read_start != read_start) {
+        last_read_start = read_start;
         fseek(file, read_start, SEEK_SET);
     }
 
@@ -80,7 +81,7 @@ void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t 
 /**
  * @brief Checks if a file exists and verifies that its size is non-zero.
  *
- * @note Uses fseek/ftell to determine file size, which is efficient for checking emptiness.
+ * @note Uses fseek/ftell to deter_mine file size, which is efficient for checking emptiness.
  * @note Error message "File is empty" is printed to stdout, not stderr, which is non-standard for errors.
  *
  * @param filename The path to the file to be checked.
@@ -121,24 +122,50 @@ void check_file(options *option) {
     }
 }
 
-void find_extrema (unsigned char *max, unsigned char *min, FILE *file) {
+void find_extrema (unsigned char *_max, unsigned char *_min, FILE *file) {
     unsigned char _buffer[MAX_BUFF_SIZE] = {0};
     int read_bytes = 0;
 
-    *min = 255;
-    *max = 0;
+    *_min = 255;
+    *_max = 0;
+
+    // Get file size for read_limit
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
 
     while (1) {
-        read_stream_to_buffer(&read_bytes, file, 0, 0, _buffer);
+        read_stream_to_buffer(&read_bytes, file, 0, file_size, _buffer);
         if (read_bytes <= 0) break;
 
         for (size_t index = 0; index < read_bytes; index++) {
-            if (*min > _buffer[index]) *min = _buffer[index];
-            if (*max < _buffer[index]) *max = _buffer[index];
+            if (*_min > _buffer[index]) *_min = _buffer[index];
+            if (*_max < _buffer[index]) *_max = _buffer[index];
 
-            if (*min == 0 && *max == 255) return;
+            if (*_min == 0 && *_max == 255) return;
         }
     }
+
+    // Reset file position to beginning
+    fseek(file, 0, SEEK_SET);
+}
+
+float calc_entropy (unsigned char *data, size_t len) {
+    if (len == 0) return 0.0f;
+
+    size_t freq[256] = {0};
+    for (size_t i = 0; i < len; i++) {
+        freq[data[i]]++;
+    }
+
+    float entropy = 0.0f;
+    for (int i = 0; i < 256; i++) {
+        if (freq[i] > 0) {
+            float p = (float)freq[i] / (float)len;
+            entropy -= p * log2f(p);
+        }
+    }
+    return entropy;
 }
 
 /**
@@ -175,14 +202,14 @@ void print_hex(options *option){
     
     // Calculates the total length of the separating line based on buff_size and ASCII flag.
     int n = 0;
-    if (option->ascii == true) n = 18 + option->buff_size * 3 + option->buff_size; 
+    if (option->ascii == true) n = 12 + option->buff_size * 3 + option->buff_size; 
     else n = 10 + option->buff_size * 3;
     
     fputc('\n', out);
     
     // Prints the horizontal separator line. Includes logic to place a '+' if ASCII is enabled.
     for (int i = 0; i < n; i++) {
-        if (option->ascii == true && i == 15 + option->buff_size * 3) {
+        if (option->ascii == true && i == 11 + option->buff_size * 3) {
             fputc('+', out);
             //n -= 1; // Adjusts loop count to maintain overall length.
         }
@@ -211,14 +238,21 @@ void print_hex(options *option){
     int line_pos = 0;        // Line position
     int bytes_read = 0;      // Bytes read in last read_file_to_buffer call.
 
+    unsigned char _max = 255, _min = 0;  // For heatmap scaling
 
+    if (option->heatmap == 1) {
+        find_extrema(&_max, &_min, file);
+    }
+
+    
     // --- Hex Output Loop ---
     while (1) {
-        int bytes_read = 0;
         read_stream_to_buffer(&bytes_read, file, option->offset_read, option->limit_read, buffer);
         if (bytes_read == 0) break;
 
         int processed = 0;
+        unsigned char _buffer[MAX_BUFF_SIZE] = {0};
+
         while (processed < bytes_read) {
             int line_len = option->buff_size;
             if (processed + line_len > bytes_read) {
@@ -243,8 +277,28 @@ void print_hex(options *option){
 
                     const char *col = RESET;
 
-                    if (option->heatmap == 2) {
+                    if (option->heatmap == 1) {
+                        col = heatmap_colors[INDEX_MAP(b, _min, _max)];
+                    }
+
+                    else if (option->heatmap == 2) {
                         col = heatmap_colors[(int)(b / 16)];
+                    }
+
+                    else if (option->string) {
+                        if (b >= 32 && b < 127) col = ASCII_COLOR;
+                        else if (b == 0) col = NULL_BYTE_COLOR; // Null Byte
+                        else if (b == 9) col = NON_PRINT_COLOR; // Tab
+                        else if (b == 10) col = NON_PRINT_COLOR; // Line Feed (LF)
+                        else if (b == 13) col = NON_PRINT_COLOR; // Carriage Return (CR)
+                        else if (b == 24) col = NON_PRINT_COLOR; // Control characters like CAN
+                        else if (b == 26) col = NON_PRINT_COLOR; // Control characters like SUB
+                        else if (b == 27) col = NON_PRINT_COLOR; // Control characters like ESC
+                        else if (b == 127) col = NON_PRINT_COLOR; // DEL
+                        else {
+                            col = ASCII_COLOR;
+                            b = 0;
+                        }
                     }
 
                     else if (option->color) {
@@ -253,29 +307,49 @@ void print_hex(options *option){
                         else               col = NON_PRINT_COLOR;
                     }                    
 
-                    line_pos += snprintf(line + line_pos, sizeof(line) - line_pos,
-                                         "%s%02x ", col, b);
-                } else {
+                    if (option->string && b == 0) {
+                        line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "   ");
+                    }
+                    else line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "%s%02x ", col, b);
+                    
+                } 
+                else {
                     line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "   ");
                 }
             }
 
+            int char_written = 0;
+
             // ASCII
             if (option->ascii) {
-                line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "\x1b[0m    |   ");
-
-                unsigned char min, max;
-
-                if (option->heatmap == 1) {
-                    find_extrema(&max, &min, file);
-                }
+                line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "\x1b[0m| ");
 
                 for (int i = 0; i < line_len; i++) {
                     unsigned char c = buffer[processed + i];
                     const char *col = RESET;
-
-                    if (option->heatmap == 2) {
+                    
+                    if (option->heatmap == 1) {
+                        col = heatmap_colors[INDEX_MAP(c, _min, _max)];
+                    }
+                    
+                    else if (option->heatmap == 2) {
                         col = heatmap_colors[(int)(c / 16)];
+                    }
+
+                    else if (option->string) {
+                        if (c >= 32 && c < 127) col = ASCII_COLOR;
+                        else if (c == 0) col = NULL_BYTE_COLOR; // Null Byte
+                        else if (c == 9) col = NON_PRINT_COLOR; // Tab
+                        else if (c == 10)  col = NON_PRINT_COLOR; // Line Feed (LF)
+                        else if (c == 13) col = NON_PRINT_COLOR; // Carriage Return (CR)
+                        else if (c == 24) col = NON_PRINT_COLOR; // Control characters like CAN
+                        else if (c == 26) col = NON_PRINT_COLOR; // Control characters like SUB
+                        else if (c == 27) col = NON_PRINT_COLOR; // Control characters like ESC
+                        else if (c == 127) col = NON_PRINT_COLOR; // DEL
+                        else {
+                            col = ASCII_COLOR;
+                            c = 0;
+                        }
                     }
 
                     else if (option->color) {
@@ -285,12 +359,34 @@ void print_hex(options *option){
                     }
 
                     char disp = (c >= 32 && c < 127) ? c : '.';
-                    line_pos += snprintf(line + line_pos, sizeof(line) - line_pos,
-                                         "%s%c", col, disp);
+
+                    if (option->string && c == 0) {
+                        line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, " ");
+                    }
+                    else line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "%s%c", col, disp);
+                    
+                    _buffer[processed + i] = c;
+                    char_written += 1;
                 }
             }
 
-            // Zeile abschließen
+            if (option->entropie) {
+                float entropy = calc_entropy(_buffer, line_len);
+
+                const char* bar;
+                if (entropy < 2.0)      bar = " ";
+                else if (entropy < 4.0) bar = "░";
+                else if (entropy < 6.0) bar = "▒";
+                else bar = "▓";
+                
+                const char *col = heatmap_colors[INDEX_MAP(entropy, 0.0f, 8.0f)];
+
+                int space_for_bar = option->buff_size - char_written + 1;
+
+                line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "%s%*s%s", col, space_for_bar, "", bar);
+            }
+
+            // Zeile abschließen (RESET Color + Newline)
             line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "\x1b[0m\n");
 
             // EINZIGER fprintf pro Zeile
