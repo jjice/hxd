@@ -1,4 +1,4 @@
-# 📂 hxd - A modern cross-platform hex dumper
+# 📂 hxd - A modern cross-platform hexdumper
 
 hxd is a small command-line tool written in C that prints binary data in a classic hex dump layout with optional coloring, heatmaps, and ASCII preview. No extern dependencies!
 
@@ -9,14 +9,14 @@ hxd is a small command-line tool written in C that prints binary data in a class
 
 # ✨ Key Features
 
-### * 📟 **Classic Layout:** Perfectly aligned hex bytes, addresses, and ASCII preview. -->
-### * 🌈 **Adaptive Heatmaps:** Visualize data intensity with 16-color modes (`adaptive` or `fixed`).
-### * 🔍 **Semantic Coloring:** Instantly distinguish between printable text, null bytes, and control characters.
-### * 🧵 **String Highlighting:** Specialized mode to make embedded strings pop.
-### * 📊 **Entropy Meter:** Real-time Shannon entropy bar per line (spot encryption/compression instantly! 🧪).
-### * ⚡ **Ultra Flexible:** Custom widths, offsets, and limits for deep surgical inspections.
-### * 🌊 **Pipe Ready:** Works flawlessly with `stdin` and includes built-in pager support (`less`/`more`).
-### * 📦 **Cross-Platform:** Native performance on Linux, macOS, and Windows.
+ * 📟 **Classic Layout:** Perfectly aligned hex bytes, addresses, and ASCII preview. -->
+ * 🌈 **Adaptive Heatmaps:** Visualize data intensity with 16-color modes (`adaptive` or `fixed`).
+ * 🔍 **Semantic Coloring:** Instantly distinguish between printable text, null bytes, and control characters.
+ * 🧵 **String Highlighting:** Specialized mode to make embedded strings pop.
+ * 📊 **Entropy Meter:** Real-time Shannon entropy bar per line (spot encryption/compression instantly! 🧪).
+ * ⚡ **Ultra Flexible:** Custom widths, offsets, and limits for deep surgical inspections.
+ * 🌊 **Pipe Ready:** Works flawlessly with `stdin` and includes built-in pager support (`less`/`more`).
+ * 📦 **Cross-Platform:** Native performance on Linux, macOS, and Windows.
 
 <br>
 
