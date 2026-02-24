@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Startet nur, wenn ein Tag wie v1.0.0 gepusht wird
 
+permissions:
+  contents: write
+
 jobs:
   build_and_release:
     name: Build & Release for ${{ matrix.os }}
