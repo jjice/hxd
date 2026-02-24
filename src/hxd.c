@@ -122,7 +122,7 @@ void find_extrema (unsigned char *_max, unsigned char *_min, FILE *file) {
         read_stream_to_buffer(&read_bytes, file, 0, file_size, _buffer);
         if (read_bytes <= 0) break;
 
-        for (size_t index = 0; index < read_bytes; index++) {
+        for (size_t index = 0; index < (size_t) read_bytes; index++) {
             if (*_min > _buffer[index]) *_min = _buffer[index];
             if (*_max < _buffer[index]) *_max = _buffer[index];
 
