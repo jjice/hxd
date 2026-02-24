@@ -20,9 +20,9 @@ hxd is a small command-line tool written in C that prints binary data in a class
 
 <br>
 
-# 🏗️ Build
+# 🏗️ Build / Install
 
-Requirements: a C compiler (clang or gcc) and CMake.
+### Requirements: a C compiler (clang or gcc) and CMake.
 
 ```
 make
@@ -35,10 +35,23 @@ cmake -S . -B build
 cmake --build build
 ```
 
-If you want to install (optional):
+### If you want to install (optional):
 
 ```bash
 cmake --install build
+```
+
+>
+
+Hint: 'Windows' You can add a PATH inside Environmental-variables to */build/bin to run in terminal 
+
+### Manual remove:
+
+```bash
+(sudo) xargs rm < build/install_manifest.txt                <- Linux / MacOS
+```
+```Powershell
+get-content build\install_manifest.txt | remove-item        <- Windows
 ```
 
 <br>
