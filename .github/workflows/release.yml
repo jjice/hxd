@@ -45,3 +45,17 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare Artifact
+        shell: bash
+        run: |
+          BINARY_PATH=$(find build -type f \( -name "hxd" -o -name "hxd.exe" \) | head -n 1)
+          
+          if [ -z "$BINARY_PATH" ]; then
+            echo "❌ ERROR: Binary not found! Hier ist der Inhalt des build-Ordners:"
+            ls -R build
+            exit 1
+          fi
+          
+          echo "✅ Found binary at: $BINARY_PATH"
+          cp "$BINARY_PATH" ./${{ matrix.asset_name }}
