@@ -14,16 +14,35 @@
 #define DIM             "\x1b[2m"  // Sehr nützlich für Unwichtiges!
 
 // "Modern UI" Farben (Helle Varianten wirken oft sauberer)
-#define ADDR_COLOR      "\x1b[94m"  // Bright Blue (Für die Adressspalte links)
-#define HEX_VAL_COLOR   "\x1b[97m"  // Bright White (Die eigentlichen Daten)
-#define NON_PRINT_COLOR "\x1b[90m"  // Grey / Bright Black (Für Punkte oder 00er Werte)
-#define ASCII_COLOR     "\x1b[36m"  // Cyan (Für die Text-Vorschau rechts)
-#define HEADER_COLOR    "\x1b[93m"  // Bright Yellow (Für die Spaltenüberschriften)
-#define PIPE_COLOR      "\x1b[91m"  // Bright Red (Für Trennstriche oder spezielle Offsets)
-#define NULL_BYTE_COLOR "\x1b[34m"    // Standard Blau (meist recht dunkel)
+#define NON_PRINT_COLOR "\x1b[38;5;179m"  // Grey / Bright Black (Für Punkte oder 00er Werte)
+#define NULL_BYTE_COLOR "\x1b[38;5;8m"  // Standard Blau (meist recht dunkel)
+#define ADDR_COLOR      "\x1b[38;5;214m"  // Bright Blue (Für die Adressspalte links)
+#define HEX_VAL_COLOR   "\x1b[38;5;95m"  // Bright White (Die eigentlichen Daten)
+#define ASCII_COLOR     "\x1b[38;5;11m"  // Cyan (Für die Text-Vorschau rechts)
+#define HEADER_COLOR    "\x1b[38;5;214m"  // Bright Yellow (Für die Spaltenüberschriften)
+
+static const char *heatmap_colors[16] = {
+    "\x1b[38;5;232m",  // 0
+    "\x1b[38;5;235m",
+    "\x1b[38;5;17m",
+    "\x1b[38;5;19m",
+    "\x1b[38;5;20m",
+    "\x1b[38;5;26m",
+    "\x1b[38;5;32m",
+    "\x1b[38;5;44m",
+    "\x1b[38;5;76m",
+    "\x1b[38;5;112m",
+    "\x1b[38;5;190m",
+    "\x1b[38;5;226m",
+    "\x1b[38;5;220m",
+    "\x1b[38;5;214m",
+    "\x1b[38;5;202m",
+    "\x1b[38;5;196m"   // 15
+};
 
 #include <stdio.h>
 #include <stdbool.h>
+
 
 #ifdef _WIN32
     // Windows nutzt Unterstriche für diese POSIX-Funktionen
@@ -43,17 +62,12 @@ static inline void print_color(const char* color_code, bool enable_color) {
 }
 
 static inline FILE* open_pager(void) {
-    // 1. Versuch: less mit -R (für Farben)
-    // 'where' (Windows) oder 'which' (Linux) prüfen ist komplex, 
-    // einfacher ist es, den Befehl direkt zu probieren.
     FILE* pager = popen("less -R", "w");
     if (pager) return pager;
 
-    // 2. Versuch: more (Standard auf Windows/Linux)
     pager = popen("more", "w");
     if (pager) return pager;
 
-    // Fallback: Einfach STDOUT (kein Pager)
     return stdout;
 }
 

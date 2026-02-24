@@ -20,11 +20,13 @@
 typedef struct {
     char *filename;     // Path to the file to be read.
     int buff_size;      // The size of the buffer/line to display (e.g., 16 bytes).
+    int heatmap;        // Enable and config heatmap view.
     bool ascii;         // Flag to determine if the ASCII representation column should be shown.
     size_t offset_read; // Bytes to skip until print
     size_t limit_read;  // Count of bytes to be read/displayed
     bool pipeline;      // Flag to determine if a pipeline is active (bypass check_file)
     bool color;         // Flag to determine if colored output is enabled
+    bool string;        // Flag to determine if strings shoud be highlighted
     bool pager;         // Flag to determine if output should be sent to a pager (e.g., less)
 } options;
 

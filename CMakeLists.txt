@@ -9,6 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(hxd 
     src/hxd.c
     src/Args.c
+    src/MagicBytes.c
 )
 
 # 2. HEADER PFADE

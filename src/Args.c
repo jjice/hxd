@@ -38,31 +38,55 @@ options *get_options(int argc, char *argv[]) {
 
     // Set default values.
     option->filename = NULL;
+    option->heatmap = 0;
     option->buff_size = 16;
     option->ascii = true;
     option->offset_read = 0;
     option->limit_read = 0;
     option->pipeline = false;
     option->color = true;
+    option->color = true;
     option->pager = false;
 
     // Help message string.
-    char help[] = "\nUsage:\n"
-                 "\n  (-f) : <filename>                        (-f is optional)"
-                 "\n    -b : Linewidth <bytes>                 (default = 16)"
-                 "\n    -a : Show ASCII-Table <on/off>         (default = on)"
-                 "\n    -o : Offset to start reading <bytes>   (default = 0)"
-                 "\n    -l : Limit to stop reading <bytes>     (default = EOF)"
-                 "\n    -c : Enable colored output <on/off>    (default = on)"
-                 "\n    -p : Enable pager output <on/off>      (default = off)"
-                 "\n              more <win> less <linux>\n"
-                 "\n    -h : Show this info\n\n";
+    static const char *help =
+        "\n"
+        "hxd - A modern hex dumper\n"
+        "Copyright (c) 2026 Joshua Jallow   MIT License\n"
+        "\n"
+        "Usage:\n"
+        "  hxd [options] [filename]\n"
+        "  cat file.bin | hxd [options]\n"
+        "\n"
+        "Options:\n"
+        "  -f,  --file    <filename>         Input file (optional if data comes from stdin)\n"
+        "  -hm, --heatmap <adaptiv|fixed>    Show Colors as Heatmap with 16 colors (default: none)\n"
+        "  -w,  --width   <num>              Bytes per line (default: 16)\n"
+        "  -a,  --ascii   <on|off>           Show ASCII representation column (default: on)\n"
+        "  -o,  --offset  <num>              Start reading at this byte offset (default: 0)\n"
+        "  -l,  --limit   <num>              Stop after this many bytes (default: read to EOF)\n"
+        "  -c,  --color   <on|off>           Enable syntax highlighting / colors (default: on)\n"
+        "  -s,  --string  <on|off>           Enable string highlighting / strings (default: off)\n"
+        "  -p,  --pager   <on|off>           Pipe output through pager (more/less) (default: off)\n"
+        "  -h,  --help                       Show this help message and exit\n"
+        "\n"
+        "Examples:\n"
+        "  hxd image.png                     # normal file\n"
+        "  hxd -w 32 -a off secret.bin       # 32 bytes/line, kein ASCII\n"
+        "  hxd file | less -R                # output inside Pager with colors\n"
+        "  echo 'Hello World' | hxd          # pipeline to hxd\n"
+        "\n"
+        "Notes:\n"
+        "  * Offsets and limits must be positive integers.\n"
+        "  * --offset and --limit cannot be combined in a way that limit < offset.\n"
+        "  * When reading from stdin (pipe), filename is not required.\n"
+        "\n";
 
     char help_short[] = "See -h for more information\n";
     
     // Loop through command line arguments starting from index 1.
     for (int x = 1; x < argc; x++) {
-        if (strcmp(argv[x], "-f") == 0) {
+        if (strcmp(argv[x], "-f") == 0 || (strcmp(argv[x], "--file") == 0)) {
             // Handles explicit filename flag.
             option->filename = argv[x + 1];
             x++; // Skip the argument value.
@@ -73,10 +97,10 @@ options *get_options(int argc, char *argv[]) {
             option->filename = argv[x];
         }
         
-        else if (strcmp(argv[x], "-b") == 0) {
+        else if (strcmp(argv[x], "-w") == 0 || (strcmp(argv[x], "--width") == 0)) {
             // Buffer size argument parsing.
             if (x + 1 >= argc) {
-                fprintf(stderr, "Error: -b requires an argument\n");
+                fprintf(stderr, "Error: width requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
@@ -87,12 +111,12 @@ options *get_options(int argc, char *argv[]) {
             long val = strtol(argv[x + 1], &endptr, 10);
 
             if (endptr == argv[x + 1]) {
-                fprintf(stderr, "Error: -b requires a numeric value\n");
+                fprintf(stderr, "Error: width requires a numeric value\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
             if (errno == ERANGE || val <= 0) {
-                fprintf(stderr, "Error: buff_size out of range\n"); // Includes check for negative/zero.
+                fprintf(stderr, "Error: width out of range\n"); // Includes check for negative/zero.
                 exit(EXIT_FAILURE);
             }
 
@@ -100,10 +124,42 @@ options *get_options(int argc, char *argv[]) {
             x++; // Skip the argument value.
         }
 
-        else if(strcmp(argv[x], "-a") == 0){
+        else if (strcmp(argv[x], "-hm") == 0 || (strcmp(argv[x], "--heatmap") == 0)){
             // ASCII flag toggle argument.
             if (x + 1 >= argc) {
-                fprintf(stderr, "Error: -a requires an argument\n");
+                fprintf(stderr, "Error: Heatmap requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            else{
+                // Check for "on"
+                if (strcmp("adaptiv", argv[x + 1]) == 0) {
+                    option->heatmap = 1;
+                    x++;
+                }
+                // Check for "off"
+                else if (strcmp("fixed", argv[x + 1]) == 0) {
+                    option->heatmap = 2;
+                    x++;
+                }
+                // Check for "off"
+                else if (strcmp("none", argv[x + 1]) == 0) {
+                    option->heatmap = 0;
+                    x++;
+                }
+                // Invalid value provided.
+                else {
+                    printf("Invalid argument for Heatmap <%s>\n", argv[x + 1]);
+                    printf("%s", help_short);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+        else if (strcmp(argv[x], "-a") == 0 || (strcmp(argv[x], "--ascii") == 0)){
+            // ASCII flag toggle argument.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: ASCII requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
@@ -120,17 +176,17 @@ options *get_options(int argc, char *argv[]) {
                 }
                 // Invalid value provided.
                 else {
-                    printf("Invalid argument -a <%s>\n", argv[x + 1]);
+                    printf("Invalid argument for ASCII <%s>\n", argv[x + 1]);
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
             }
         }
 
-        else if(strcmp(argv[x], "-o") == 0){
+        else if (strcmp(argv[x], "-o") == 0 || (strcmp(argv[x], "--offset") == 0)) {
             // Offset Flag
             if (x + 1 >= argc) {
-                fprintf(stderr, "Error: -o requires an argument\n");
+                fprintf(stderr, "Error: offset requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
@@ -141,14 +197,14 @@ options *get_options(int argc, char *argv[]) {
 
                 // Check for existing argument
                 if (endptr == argv[x + 1]) {
-                    fprintf(stderr, "Error: -o requires a numeric value\n");
+                    fprintf(stderr, "Error: offset requires a numeric value\n");
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
 
                 // Check for bad characters
                 if (*endptr != '\0' && !isspace((unsigned char)*endptr)) {
-                    fprintf(stderr, "Error: -o contains invalid characters\n");
+                    fprintf(stderr, "Error: offset contains invalid characters\n");
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
@@ -171,10 +227,10 @@ options *get_options(int argc, char *argv[]) {
             
         }
 
-        else if(strcmp(argv[x], "-l") == 0){
+        else if (strcmp(argv[x], "-l") == 0 || (strcmp(argv[x], "--limit") == 0)) {
             // Limit Flag
             if (x + 1 >= argc) {
-                fprintf(stderr, "Error: -l requires an argument\n");
+                fprintf(stderr, "Error: limit requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
@@ -185,14 +241,14 @@ options *get_options(int argc, char *argv[]) {
 
                 // Check for existing argument
                 if (endptr == argv[x + 1]) {
-                    fprintf(stderr, "Error: -l requires a numeric value\n");
+                    fprintf(stderr, "Error: limit requires a numeric value\n");
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
 
                 // Check for bad characters
                 if (*endptr != '\0' && !isspace((unsigned char)*endptr)) {
-                    fprintf(stderr, "Error: -l contains invalid characters\n");
+                    fprintf(stderr, "Error: limit contains invalid characters\n");
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
@@ -221,10 +277,10 @@ options *get_options(int argc, char *argv[]) {
             
         }
 
-        else if(strcmp(argv[x], "-c") == 0){
+        else if (strcmp(argv[x], "-c") == 0 || (strcmp(argv[x], "--color") == 0)){
             // ASCII flag toggle argument.
             if (x + 1 >= argc) {
-                fprintf(stderr, "Error: -c requires an argument\n");
+                fprintf(stderr, "Error: color requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
@@ -241,17 +297,44 @@ options *get_options(int argc, char *argv[]) {
                 }
                 // Invalid value provided.
                 else {
-                    printf("Invalid argument -c <%s>\n", argv[x + 1]);
+                    printf("Invalid argument for color <%s>\n", argv[x + 1]);
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
             }
         }
 
-        else if(strcmp(argv[x], "-p") == 0){
+        else if (strcmp(argv[x], "-s") == 0 || (strcmp(argv[x], "--string") == 0)){
             // ASCII flag toggle argument.
             if (x + 1 >= argc) {
-                fprintf(stderr, "Error: -p requires an argument\n");
+                fprintf(stderr, "Error: string requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            else{
+                // Check for "on"
+                if (strcmp("on", argv[x + 1]) == 0) {
+                    option->string = true;
+                    x++;
+                }
+                // Check for "off"
+                else if (strcmp("off", argv[x + 1]) == 0) {
+                    option->string = false;
+                    x++;
+                }
+                // Invalid value provided.
+                else {
+                    printf("Invalid argument for string <%s>\n", argv[x + 1]);
+                    printf("%s", help_short);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+        else if (strcmp(argv[x], "-p") == 0 || (strcmp(argv[x], "--pager") == 0)) {
+            // ASCII flag toggle argument.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: pager requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
@@ -268,14 +351,14 @@ options *get_options(int argc, char *argv[]) {
                 }
                 // Invalid value provided.
                 else {
-                    printf("Invalid argument -p <%s>\n", argv[x + 1]);
+                    printf("Invalid argument for pager <%s>\n", argv[x + 1]);
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
             }
         }
 
-        else if(strcmp(argv[x], "-h") == 0){
+        else if (strcmp(argv[x], "-h") == 0 || (strcmp(argv[x], "--help") == 0)) {
             // Help flag.
             printf("%s", help);
             exit(EXIT_FAILURE);

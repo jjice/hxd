@@ -1,116 +1,42 @@
-(done) # offset parameter
-(done) # limit parameter
-# more efficient ascii-printable function (is_printable())
+---------- Github ----------
 
-Hier ist eine konkrete, priorisierte Roadmap, mit der du das Repository in den nächsten 1–4 Wochen von einem „verwaisten Hobby-Projekt“ in ein ernstzunehmendes, nutzbares Open-Source-Tool verwandeln kannst. Ich habe die Schritte nach Impact/Aufwand sortiert (hoher Impact zuerst).
-1. Sofort (nächste 30–60 Minuten) – Sichtbarkeit & Legalität retten
+Repositry überarbeiten:
+    Beschreibung
+    Topics
+    Release
+    Changelog
 
- Lizenz hinzufügen → LICENSE (MIT oder Apache-2.0 empfohlen, MIT ist am einfachsten)
-Ohne Lizenz darf niemand dein Tool legal nutzen/forken → das ist aktuell der größte Blocker.
- Repository-Beschreibung und Topics setzen
-Beschreibung: „hxd – tiny, dependency-free hex viewer written in C“
-Topics: hexdump, hex-viewer, c, cli, low-level, debugging
- README verbessern (5 Minuten)
-Füge oben einen kurzen One-Liner + Badges hinzu (siehe Beispiel weiter unten).
+    Readme:
+        GIF
+        Beschreibung
+        Installation
+        Bechmarking gegen xxd, hexdump
 
-2. Nächste 1–2 Tage – Professionalisierung & Trust
+Realese: Installation über Packagemanager
 
- GitHub Actions CI einrichten (Copy-Paste ~10 Minuten)
-Kompiliert auf Ubuntu, macOS, Windows (mingw) + läuft valgrind/memcheck.
- Releases erstellen
-Ersten Release v0.1.0 taggen und Binaries (Linux x86_64, macOS, Windows) hochladen → Leute können es sofort ohne Compiler nutzen.
- Installation über Package-Manager ermöglichen
-Homebrew formula (super einfach): brew install jjice/tap/hxd
-AUR-Paket (wenn du Arch nutzt oder jemanden kennst)
-Später: vcpkg, Conan, nix …
+Testing:
+    Unit-Test
+    cppcheck im CI
+    Valgrind
+    Fuzzing mit afl++ oder libfuzzer
 
+---------- Features ----------
 
-3. Nächste 3–7 Tage – Features, die sofort Nutzer bringen
+✅Argumente überarbeiten
+✅Help überarbeitet
 
-FeatureWarum es viele Nutzer anziehtAufwandFarbausgabe (wie hexyl)90 % der modernen Hex-Viewer haben Farben~150 Zeilen-s / --skip (wie xxd)Sehr häufig gebraucht beim Reverse Engineering10 Zeilen--color=auto/always/neverStandard bei modernen CLI-Toolstrivial--endian big/littleViele Embedded-Leute brauchen das~50 Zeilen--width N (Bytes pro Zeile)Flexibilität5 ZeilenMan-Page (hxd.1)Professionell + man hxd funktioniert20 Min
-Farben allein verdoppeln oft die Stars innerhalb von Tagen (siehe hexyl, bat, delta).
-1. Nächste 1–2 Wochen – Langfristige Qualität
+Magic-Bytes-Erkennung:
+    MagicTable hinzugefügt, es fehlt noch die Prüfung und ausgabe des Dateiformates.
 
- Unit-Tests + Integrationstests (check oder cmocka)
-clang-tidy / cppcheck im CI
- Valgrind / ASan im CI
- Fuzzing mit afl++ oder libFuzzer (sehr cool für C-Projekt)
- Makefile + CMake gleichzeitig anbieten (viele wollen einfach make)
- Benchmark gegen xxd, hexdump, hexyl im README
+String-Highlighting:
+    Argument und option wurde hinzugefügt. Es fehlt noch die Erkennung.
 
-5. Bonus-Ideen, die viral gehen können
+Live-Preview (--follow)
 
-„One-Header“-Version: alles in einer hxd.h + main.c → Leute lieben sowas (siehe stb-Libraries)
-WebAssembly-Version → im Browser Hexdumps anzeigen (super einfach mit emscripten)
-hxd - liest von stdin und färbt live (wie cat aber hex)
-
-Beispiel-README-Header (kopiere das einfach rein)
-Markdown# hxd — tiny & fast hex viewer in C
-
-[![CI](https://github.com/jjice/hxd/actions/workflows/ci.yml/badge.svg)](https://github.com/jjice/hxd/actions)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-<img src="https://raw.githubusercontent.com/jjice/hxd/main/screenshot.png" width="700"/>
-
-A minimal, dependency-free hex dump utility with color support.
-
-## Features
-- Zero dependencies
-- Color output (like hexyl)
-- Tiny binary (~15 KB static)
-- Works on Linux, macOS, Windows
-
-## Installation
-```bash
-# Homebrew
-brew install jjice/tap/hxd
-
-# From source
-git clone https://github.com/jjice/hxd.git && cd hxd
-cmake -B build && cmake --build build --target install
-textWenn du die ersten drei Schritte (Lizenz + CI + Release + Farben) in den nächsten 7 Tagen erledigt hast, wirst du sehr wahrscheinlich innerhalb von 2–4 Wochen 50–200 Stars sehen – das habe ich bei vergleichbaren kleinen C-Tools immer wieder beobachtet.
-
-Fang am besten jetzt direkt mit der MIT-Lizenz an (einfach kopieren von https://opensource.org/licenses/MIT) – das ist der größte Hebel.
-
-Viel Erfolg – ich bin gespannt, wie schnell es dann abhebt! Wenn du Hilfe bei einem der Schritte brauchst (z. B. CI-YAML, Farb-Implementierung, Release-Binaries bauen), sag einfach Bescheid.838ms
+Heatmap:
+    Argument-Logik implmentiert
 
 
-1. "Semantic Highlighting" (Das intelligenteste Tool)
-xxd färbt alles stumpf ein. Dein Programm könnte den Inhalt verstehen.
+Entropie (darstellen pro zeile als heatmap für jedes Zeichen)
 
-Die Idee: Dein Tool erkennt bekannte Dateisignaturen (Magic Bytes).
-
-Feature: Wenn die Datei mit 47 49 46 38 beginnt, schreibt dein Tool oben klein: [Type: GIF Image].
-
-Highlighting: Färbe bekannte Strukturen unterschiedlich ein. Zum Beispiel: Strings (ASCII) in Grün, Null-Bytes in Dunkelgrau, und ausführbare Header (wie MZ bei .exe) in knalligem Rot.
-
-Warum? Ein Mensch sieht dann nicht nur Zahlen, sondern sofort die Struktur der Daten.
-
-2. "Delta-Mode" (Vergleichs-Modus)
-Das Vergleichen von zwei Hex-Dumps ist mit Standard-Tools extrem mühsam.
-
-Die Idee: Du erlaubst zwei Dateipfade als Input: hxd file1.bin file2.bin.
-
-Feature: Dein Tool zeigt beide Dateien nebeneinander oder hebt in einer Datei nur die Bytes hervor, die sich im Vergleich zur anderen Datei geändert haben.
-
-Warum? Das ist das ultimative Feature für Reverse Engineer und Leute, die Savegames von Spielen hacken wollen.
-
-3. "Live-Stream Mode" (Das moderne Tool)
-Normalerweise liest ein Hexdumper die Datei einmal und ist fertig.
-
-Die Idee: Ein Modus ähnlich wie tail -f.
-
-Feature: hxd --follow logfile.dat. Wenn ein anderes Programm Daten am Ende der Datei hinzufügt, aktualisiert dein Hexdump live die Anzeige.
-
-Warum? Perfekt zum Debuggen von Programmen, die gerade live in eine Binärdatei schreiben.
-
-Mein Favorit für dich: "The Clean View" (Visual Density)
-Die meisten Hex-Viewer sind überladen. Du könntest einen Modus bauen, der die Informationsdichte reduziert:
-
-Heatmap: Bytes mit hohen Werten (0xFF) sind hell, Bytes mit niedrigen Werten (0x01) sind dunkel.
-
-Entropy-Bar: Drucke am Rand einen kleinen Balken, der zeigt, wie "zufällig" die Daten in diesem Block sind (verschlüsselte/komprimierte Daten sehen im Hexdump anders aus als normaler Text).
-
-
-
-Pager ist noch experimentel, überarbeiten wichtig...
+Vergleichsmodus
