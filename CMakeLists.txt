@@ -16,6 +16,10 @@ add_executable(hxd
 # 2. HEADER PFADE
 target_include_directories(hxd PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
+if(UNIX AND NOT APPLE)
+    target_link_libraries(hxd PRIVATE m)
+endif()
+
 # 3. OPTIMIERUNGEN
 if (NOT MSVC)
     target_compile_options(hxd PRIVATE
