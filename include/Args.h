@@ -12,11 +12,6 @@
 #include <stdbool.h>
 
 // options (no getopt)
-/**
- * @struct options
- * @brief Structure to hold the configuration for the hex dump utility.
- * This manually replaces the functionality provided by standard libraries like getopt.
- */
 typedef struct {
     char *filename;     // Path to the file to be read.
     int buff_size;      // The size of the buffer/line to display (e.g., 16 bytes).

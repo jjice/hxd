@@ -21,31 +21,14 @@
 
 #define MAX_BUFF_SIZE 16384
 
-/** 
- * This documentation has been generated with ai. Use with caution!
- */
-
-
-/**
- * @brief Reads a chunk of data from an open file handle into a dynamically allocated buffer.
- *
- *
- * @param filename File path (ignored, as the FILE* handle is already passed).
- * @param out_read Pointer to store the actual number of bytes read.
- * @param buff_size The _maximum buffer size to read.
- * @param file The already opened FILE* handle.
- * @param read_start Start Byte to read
- * @return const char* Pointer to the dynamically allocated buffer (must be freed by the caller).
- */
-
-
 static unsigned char buffer[16384] = {0}; // Static buffer to avoid dynamic allocation overhead. Size is MAX_BUFF_SIZE.
 
+// Read a chunk of the file into the buffer, starting from read_start and respecting read_limit
 void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t read_limit, unsigned char *_buffer) {
     
+    // Return if file is stdin
     if (file == stdin) {
-        // Bei stdin: Offset ignorieren, einfach lesen 
-        *out_read = fread(buffer, 1,  MAX_BUFF_SIZE, file);
+        *out_read = fread(_buffer, 1,  MAX_BUFF_SIZE, file);
         return;
     }
     
@@ -78,25 +61,21 @@ void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t 
     return;
 }
 
-/**
- * @brief Checks if a file exists and verifies that its size is non-zero.
- *
- * @note Uses fseek/ftell to deter_mine file size, which is efficient for checking emptiness.
- * @note Error message "File is empty" is printed to stdout, not stderr, which is non-standard for errors.
- *
- * @param filename The path to the file to be checked.
- */
+// Check if file exists and is not empty, also checks if offset and limit are in range of filesize
 void check_file(options *option) {
+
     FILE *fp = fopen(option->filename, "rb");
 
     if(option->pipeline == true) return;
 
     if(fp == NULL) {
+
         // File not found or permission denied.
         perror("File not found / No permission to read");
         exit(EXIT_FAILURE);
     }
     else {
+
         // Check for zero size
         fseek(fp, 0, SEEK_END);
         size_t file_size = ftell(fp);
@@ -105,12 +84,14 @@ void check_file(options *option) {
             fclose(fp);
             exit(EXIT_FAILURE);
         }
+
         // Ceck if filesize is in range of offset till limit
         if (file_size < option->offset_read + option->limit_read) {
             printf("Filesize is out of range, check offset|limit");
             fclose(fp);
             exit(EXIT_FAILURE);
         }
+
         // Check if file limit has been placed, else EOF
         if (option->limit_read == 0) {
             fseek(fp, 0, SEEK_END);
@@ -122,7 +103,9 @@ void check_file(options *option) {
     }
 }
 
+// Find the minimum and maximum byte values in the file for heatmap scaling
 void find_extrema (unsigned char *_max, unsigned char *_min, FILE *file) {
+
     unsigned char _buffer[MAX_BUFF_SIZE] = {0};
     int read_bytes = 0;
 
@@ -134,6 +117,7 @@ void find_extrema (unsigned char *_max, unsigned char *_min, FILE *file) {
     size_t file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
+    // Read through the file in chunks and update min/max values
     while (1) {
         read_stream_to_buffer(&read_bytes, file, 0, file_size, _buffer);
         if (read_bytes <= 0) break;
@@ -150,6 +134,7 @@ void find_extrema (unsigned char *_max, unsigned char *_min, FILE *file) {
     fseek(file, 0, SEEK_SET);
 }
 
+// Calculate the Shannon entropy of a byte buffer
 float calc_entropy (unsigned char *data, size_t len) {
     if (len == 0) return 0.0f;
 
@@ -168,21 +153,19 @@ float calc_entropy (unsigned char *data, size_t len) {
     return entropy;
 }
 
-/**
- * @brief Executes the core hex dump loop, handling output formatting and file reading.
- *
- * @param option Pointer to the configured options structure.
- */
+// Main function to print the hex dump based on the provided options
 void print_hex(options *option){
-
-    FILE *out = stdout; // Standardmäßig normaler Output
+    
+    // Open pager if requested, otherwise use stdout
+    FILE *out = stdout;
     if (option->pager) {
         out = open_pager();
     }
 
+    // Redefine printf to write to the pager or stdout, ensuring all output goes to the correct destination.
     #define printf(...) fprintf(out, __VA_ARGS__)
 
-    int addr_display = 0;    // Starting memory address to display for the current row.
+    int addr_display = 0;
     
     // Apply starting addr
     addr_display += option->offset_read;
@@ -195,6 +178,7 @@ void print_hex(options *option){
     
     // Prints spaces to align column headers with the hex data area.
     printf("%*s", 11, " ");
+    
     // Prints column headers (offsets within the line: 00, 01, 02...).
     for (int i = 0; i < option->buff_size; i++) {
         printf("%02X ", i);
@@ -211,13 +195,11 @@ void print_hex(options *option){
     for (int i = 0; i < n; i++) {
         if (option->ascii == true && i == 11 + option->buff_size * 3) {
             fputc('+', out);
-            //n -= 1; // Adjusts loop count to maintain overall length.
         }
         fputc('-', out);
     }
     fputc('\n', out);
     
-    // FILE handler
     FILE *file = NULL;
     
     // checks if filename is empty, then use stdin as file
@@ -252,7 +234,8 @@ void print_hex(options *option){
 
         int processed = 0;
         unsigned char _buffer[MAX_BUFF_SIZE] = {0};
-
+        
+        // Process the buffer in lines of buff_size, ensuring we don't exceed bytes_read.
         while (processed < bytes_read) {
             int line_len = option->buff_size;
             if (processed + line_len > bytes_read) {
@@ -261,7 +244,7 @@ void print_hex(options *option){
 
             line_pos = 0;
 
-            // Adress bar
+            // Address output with optional color. Uses addr_display for the current line's starting address.
             if (option->color) {
                 line_pos += snprintf(line + line_pos, sizeof(line) - line_pos,
                                     "%s%08X%s | ", RESET, addr_display, RESET);
@@ -270,13 +253,16 @@ void print_hex(options *option){
                                     "%08X | ", addr_display);
             }
 
-            // HEX output
+            // HEX loop: Iterates through each byte in the current line, 
+            // applying coloring based on heatmap, string, or color options.
             for (int i = 0; i < option->buff_size; i++) {
                 if (i < line_len) {
                     unsigned char b = buffer[processed + i];
 
                     const char *col = RESET;
 
+                    // Color logic for heatmap and string options. 
+                    // Determines the appropriate color code for the current byte.
                     if (option->heatmap == 1) {
                         col = heatmap_colors[INDEX_MAP(b, _min, _max)];
                     }
@@ -307,6 +293,8 @@ void print_hex(options *option){
                         else               col = NON_PRINT_COLOR;
                     }                    
 
+                    // Prints the hex value of the byte with appropriate spacing. 
+                    // If string mode is enabled and the byte is 0, it prints spaces instead of "00".
                     if (option->string && b == 0) {
                         line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "   ");
                     }
@@ -320,7 +308,8 @@ void print_hex(options *option){
 
             int char_written = 0;
 
-            // ASCII
+            // ASCII output loop: Similar to the HEX loop, 
+            // but focuses on printing the ASCII representation of the bytes.
             if (option->ascii) {
                 line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "\x1b[0m| ");
 
@@ -370,6 +359,8 @@ void print_hex(options *option){
                 }
             }
 
+            // Heatmap bar logic: If heatmap is enabled, calculates the entropy of the current line 
+            // and appends a colored bar to visually represent the entropy level.
             if (option->entropie) {
                 float entropy = calc_entropy(_buffer, line_len);
 
@@ -386,12 +377,11 @@ void print_hex(options *option){
                 line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "%s%*s%s", col, space_for_bar, "", bar);
             }
 
-            // Zeile abschließen (RESET Color + Newline)
             line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "\x1b[0m\n");
 
-            // EINZIGER fprintf pro Zeile
+            // Writes the constructed line to the output (pager or stdout). 
+            // Uses fwrite for binary safety, especially if line contains null bytes.
             fwrite(line, 1, line_pos, out);
-            // oder: fputs(line, out);  (wenn du sicher bist, dass kein \0 drin ist)
 
             addr_display += line_len;
             processed += line_len;
@@ -401,17 +391,14 @@ void print_hex(options *option){
     printf("\n");
     // Closes the file handle opened at the beginning of print_hex.
     if (!option->pipeline) fclose(file);
-    #undef printf // Wichtig: Am Ende der Funktion das Makro wieder löschen
+    #undef printf
 }
 
-/**
- * @brief Main entry point of the program.
- *
- * @param argc Argument count.
- * @param argv Argument vector.
- * @return int Exit status.
- */
+
 int main(int argc, char *argv[]) {
+
+    // Enable ANSI escape code processing on Windows 10 
+    // and later for colored output in the console. (optional on terminal-app)
     #ifdef _WIN32
         HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
         DWORD dwMode = 0;

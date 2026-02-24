@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include "Args.h"
 
+// issatty and fileno for Windows compatibility
 #ifdef _WIN32
     #include <io.h>
     #define isatty _isatty
@@ -21,14 +22,8 @@
     #include <unistd.h>
 #endif
 
-/**
- * @brief Parses command line arguments and initializes the options structure.
- *
- * @note Implements manual argument parsing instead of using standard library functions (getopt).
- * @param argc Argument count.
- * @param argv Argument vector.
- * @return options* Pointer to the dynamically allocated options structure.
- */
+// Function to read a chunk of the file into the buffer, 
+// starting from read_start and respecting read_limit
 options *get_options(int argc, char *argv[]) {
     // Allocate memory for options structure.
     options *option = (options *) malloc(sizeof(options));

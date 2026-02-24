@@ -8,18 +8,16 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-// Basiseffekte
 #define RESET           "\x1b[0m"
 #define BOLD            "\x1b[1m"
-#define DIM             "\x1b[2m"  // Sehr nützlich für Unwichtiges!
+#define DIM             "\x1b[2m"
 
-// "Modern UI" Farben (Helle Varianten wirken oft sauberer)
-#define NON_PRINT_COLOR "\x1b[38;5;58m"  // Grey / Bright Black (Für Punkte oder 00er Werte)
-#define NULL_BYTE_COLOR "\x1b[38;5;8m"  // Standard Blau (meist recht dunkel)
-#define ADDR_COLOR      "\x1b[38;5;214m"  // Bright Blue (Für die Adressspalte links)
-#define HEX_VAL_COLOR   "\x1b[38;5;95m"  // Bright White (Die eigentlichen Daten)
-#define ASCII_COLOR     "\x1b[38;5;11m"  // Cyan (Für die Text-Vorschau rechts)
-#define HEADER_COLOR    "\x1b[38;5;214m"  // Bright Yellow (Für die Spaltenüberschriften)
+#define NON_PRINT_COLOR "\x1b[38;5;58m"     // Grey / Bright Black 
+#define NULL_BYTE_COLOR "\x1b[38;5;8m"      // Standard Blau 
+#define ADDR_COLOR      "\x1b[38;5;214m"    // Bright Blue 
+#define HEX_VAL_COLOR   "\x1b[38;5;95m"     // Bright White 
+#define ASCII_COLOR     "\x1b[38;5;11m"     // Cyan 
+#define HEADER_COLOR    "\x1b[38;5;214m"    // Bright Yellow 
 
 static const char *heatmap_colors[16] = {
     "\x1b[38;5;232m",  // 0
@@ -47,23 +45,28 @@ static const char *heatmap_colors[16] = {
 
 
 #ifdef _WIN32
-    // Windows nutzt Unterstriche für diese POSIX-Funktionen
+    // Windows-specific definitions for popen and fileno
     #define popen _popen
     #define pclose _pclose
     
-    // Verhindert die Warnung wegen fopen
+    // Disable secure warnings for functions like fopen, popen, etc.
     #ifndef _CRT_SECURE_NO_WARNINGS
         #define _CRT_SECURE_NO_WARNINGS
     #endif
 #endif
 
+// Function prototypes
 static inline void print_color(const char* color_code, bool enable_color) {
+    
     if (enable_color) {
         printf("%s", color_code);
     }
 }
 
+// Function to open a pager (like less or more) for output. 
+// Falls back to stdout if no pager is available.
 static inline FILE* open_pager(void) {
+    
     FILE* pager = popen("less -R", "w");
     if (pager) return pager;
 
