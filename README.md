@@ -1,4 +1,4 @@
-# 📂 hxd - A modern cross-platform hex dumper
+# 📂 hxd - A modern cross-platform hexdumper
 
 hxd is a small command-line tool written in C that prints binary data in a classic hex dump layout with optional coloring, heatmaps, and ASCII preview. No extern dependencies!
 
