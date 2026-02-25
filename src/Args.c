@@ -60,7 +60,7 @@ options *get_options(int argc, char *argv[]) {
         "Options:\n"
         "  -f,  --file    <filename>         Input file (optional if data comes from stdin)\n"
         "  -hm, --heatmap <adaptiv|fixed>    Show Colors as Heatmap with 16 colors (default: none)\n"
-        "  -w,  --width   <num>              Bytes per line (default: 16)\n"
+        "  -w,  --width   <num>              Bytes per line (default: 16) (0 -> no new line)\n"
         "  -a,  --ascii   <on|off>           Show ASCII representation column (default: on)\n"
         "  -o,  --offset  <num>              Start reading at this byte offset (default: 0)\n"
         "  -l,  --limit   <num>              Stop after this many bytes (default: read to EOF)\n"
@@ -76,7 +76,7 @@ options *get_options(int argc, char *argv[]) {
         "  hxd -w 32 -a off secret.bin       # 32 bytes/line, kein ASCII\n"
         "  hxd file | less -R                # output inside Pager with colors\n"
         "  echo 'Hello World' | hxd          # pipeline to hxd\n"
-        "  hxd -ro test > o.txt              # raw output into a file\n"
+        "  hxd -w 0 -ro test > o.txt         # raw output without newlines into a file\n"
         "\n"
         "Notes:\n"
         "  * Offsets and limits must be positive integers.\n"
@@ -117,8 +117,12 @@ options *get_options(int argc, char *argv[]) {
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
-            if (errno == ERANGE || val <= 0) {
+            if (errno == ERANGE || val < 0) {
                 fprintf(stderr, "Error: width out of range\n"); // Includes check for negative/zero.
+                exit(EXIT_FAILURE);
+            }
+            if (val > 512) {
+                fprintf(stderr, "Error: width out of range [max. 512]\n"); // Includes check for negative/zero.
                 exit(EXIT_FAILURE);
             }
 
@@ -419,6 +423,12 @@ options *get_options(int argc, char *argv[]) {
     }
 
     // Deactivate future flags for true raw 
+    if (option->buff_size == 0 && !option->raw) {
+        fprintf(stderr, "Error: Width can only be 0 if <-ro> has been set\n");
+        printf("%s", help_short);
+        exit(EXIT_FAILURE);
+    }
+    
     if (option->raw) {
         option->color = false;
         option->ascii = false;

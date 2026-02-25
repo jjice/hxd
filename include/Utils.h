@@ -8,6 +8,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stddef.h>
 #define RESET           "\x1b[0m"
 #define BOLD            "\x1b[1m"
 #define DIM             "\x1b[2m"
@@ -74,6 +75,15 @@ static inline FILE* open_pager(void) {
     if (pager) return pager;
 
     return stdout;
+}
+
+// Return 0 if a single char from a given string is not a space char ' ' 
+static inline int is_space(size_t n, unsigned char *str) {
+    unsigned char *end = str + n;
+    while (str < end) {
+        if (*str++ != 32) return 0;
+    }
+    return 1;
 }
 
 #endif
