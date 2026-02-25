@@ -79,6 +79,7 @@ cat file.bin | hxd [options]
 | -s, --string <on\|off> | Highlight strings | off |
 | -p, --pager <on\|off> | Pipe output through pager (more/less) | off |
 | -e, --entropy <on\|off> | Show entropy bar per line | off |
+| -ro, --raw | Raw output to console / file (pipe) | - |
 | -h, --help | Show help and exit | - |
 
 Notes:

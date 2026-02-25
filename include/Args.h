@@ -24,6 +24,7 @@ typedef struct {
     bool string;        // Flag to determine if strings shoud be highlighted
     bool pager;         // Flag to determine if output should be sent to a pager (e.g., less)
     bool entropie;      // Future options: -e, --entropy to show entropy graph per line
+    bool raw;           // Flag to determine if output should be raw
 } options;
 
 options *get_options(int argc, char *argv[]);

@@ -45,6 +45,7 @@ options *get_options(int argc, char *argv[]) {
     option->pager = false;
     option->entropie = false;
     option->string = false;
+    option->raw = false;
 
     // Help message string.
     static const char *help =
@@ -67,6 +68,7 @@ options *get_options(int argc, char *argv[]) {
         "  -s,  --string  <on|off>           Enable string highlighting / strings (default: off)\n"
         "  -p,  --pager   <on|off>           Pipe output through pager (more/less) (default: off)\n"
         "  -e,  --entropy <on|off>           Show entropy graph per line (default: off)\n"
+        "  -ro, --raw                        Raw output to console | file (pipe)\n"
         "  -h,  --help                       Show this help message and exit\n"
         "\n"
         "Examples:\n"
@@ -74,6 +76,7 @@ options *get_options(int argc, char *argv[]) {
         "  hxd -w 32 -a off secret.bin       # 32 bytes/line, kein ASCII\n"
         "  hxd file | less -R                # output inside Pager with colors\n"
         "  echo 'Hello World' | hxd          # pipeline to hxd\n"
+        "  hxd -ro test > o.txt              # raw output into a file\n"
         "\n"
         "Notes:\n"
         "  * Offsets and limits must be positive integers.\n"
@@ -384,6 +387,11 @@ options *get_options(int argc, char *argv[]) {
             }
         }
 
+        else if (strcmp(argv[x], "-ro") == 0 || (strcmp(argv[x], "--raw") == 0)){
+            // RAW flag toggle argument.
+            option->raw = true;
+        }
+
         else if (strcmp(argv[x], "-h") == 0 || (strcmp(argv[x], "--help") == 0)) {
             // Help flag.
             printf("%s", help);
@@ -408,6 +416,13 @@ options *get_options(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
        option->pipeline = true;
+    }
+
+    // Deactivate future flags for true raw 
+    if (option->raw) {
+        option->color = false;
+        option->ascii = false;
+        option->heatmap = false;
     }
 
     return option;
