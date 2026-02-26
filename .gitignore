@@ -1,5 +1,5 @@
 build/*
 .vscode
 .cache
-.git_push
+."git_push"
 .test

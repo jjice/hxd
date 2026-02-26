@@ -3,7 +3,7 @@ name: Production Release
 on:
   push:
     tags:
-      - 'v*' # Startet nur, wenn ein Tag wie v1.0.0 gepusht wird
+      - 'v*'
 
 permissions:
   contents: write
@@ -17,41 +17,42 @@ jobs:
         include:
           - os: ubuntu-latest
             asset_name: hxed-linux-x64
+            executable: hxed
           - os: windows-latest
             asset_name: hxed-windows-x64.exe
+            executable: hxed.exe
           - os: macos-latest
             asset_name: hxed-macos-arm64
+            executable: hxed
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Wichtig für das automatische Changelog
 
       - name: Configure and Build
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
 
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ matrix.asset_name }}
-          generate_release_notes: true # DAS erstellt das automatische Changelog!
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Prepare Artifact
         shell: bash
         run: |
-          BINARY_PATH=$(find build -type f \( -name "hxed" -o -name "hxed.exe" \) | head -n 1)
-          
-          if [ -z "$BINARY_PATH" ]; then
-            echo "❌ ERROR: Binary not found! Hier ist der Inhalt des build-Ordners:"
+          # Wir suchen gezielt in build ODER build/Release (für Windows)
+          if [ -f "build/${{ matrix.executable }}" ]; then
+            cp "build/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
+          elif [ -f "build/Release/${{ matrix.executable }}" ]; then
+            cp "build/Release/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
+          else
+            echo "❌ ERROR: ${{ matrix.executable }} wurde nirgendwo gefunden!"
             ls -R build
             exit 1
           fi
-          
-          echo "✅ Found binary at: $BINARY_PATH"
-          cp "$BINARY_PATH" ./${{ matrix.asset_name }}
+          echo "✅ File copied to: ./${{ matrix.asset_name }}"
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ matrix.asset_name }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

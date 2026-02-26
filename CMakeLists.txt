@@ -37,7 +37,6 @@ if (NOT MSVC)
         $<$<CONFIG:Debug>:-g -O0 -Wall>
     )
 else()
-    # Hier war noch ein Tippfehler ("mein_tool" statt "hxed")
     target_compile_options(hxed PRIVATE
         $<$<CONFIG:Release>:/O2 /arch:AVX2>
         $<$<CONFIG:Debug>:/Zi /Od>
