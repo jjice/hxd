@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(hxed LANGUAGES C VERSION 1.1.0)
+project(hxed LANGUAGES C VERSION 1.1.2)
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
