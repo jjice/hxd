@@ -45,12 +45,12 @@ jobs:
     - name: Run Basic Test
       shell: bash
       run: |
-        # Wir suchen rekursiv im build-Ordner nach der hxd Datei
+        # Wir suchen rekursiv im build-Ordner nach der hxed Datei
         # und machen sie ausführbar (wichtig für Linux/macOS)
-        TARGET=$(find build -name "hxd" -o -name "hxd.exe" | head -n 1)
+        TARGET=$(find build -name "hxed" -o -name "hxed.exe" | head -n 1)
         
         if [ -z "$TARGET" ]; then
-          echo "FEHLER: hxd wurde nirgendwo im build-Ordner gefunden!"
+          echo "FEHLER: hxed wurde nirgendwo im build-Ordner gefunden!"
           ls -R build
           exit 1
         fi

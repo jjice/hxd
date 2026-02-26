@@ -16,11 +16,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            asset_name: hxd-linux-x64
+            asset_name: hxed-linux-x64
           - os: windows-latest
-            asset_name: hxd-windows-x64.exe
+            asset_name: hxed-windows-x64.exe
           - os: macos-latest
-            asset_name: hxd-macos-arm64
+            asset_name: hxed-macos-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -31,13 +31,6 @@ jobs:
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
-
-      - name: Prepare Artifact
-        shell: bash
-        run: |
-          # Findet die Binary egal wo sie liegt (unser bewährter Trick)
-          TARGET=$(find build -name "hxd" -o -name "hxd.exe" | head -n 1)
-          cp "$TARGET" ./${{ matrix.asset_name }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -52,7 +45,7 @@ jobs:
       - name: Prepare Artifact
         shell: bash
         run: |
-          BINARY_PATH=$(find build -type f \( -name "hxd" -o -name "hxd.exe" \) | head -n 1)
+          BINARY_PATH=$(find build -type f \( -name "hxed" -o -name "hxed.exe" \) | head -n 1)
           
           if [ -z "$BINARY_PATH" ]; then
             echo "❌ ERROR: Binary not found! Hier ist der Inhalt des build-Ordners:"

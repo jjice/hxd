@@ -1,11 +1,11 @@
 # 📂 hxed - A modern cross-platform hex-viewer
 
-hxd is a small command-line tool written in C that prints binary data in a classic hex dump layout with optional coloring, heatmaps, and ASCII preview. No extern dependencies!
+hxed is a small command-line tool written in C that prints binary data in a classic hex dump layout with optional coloring, heatmaps, and ASCII preview. No extern dependencies!
 
-[![Arch Linux](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Arch%20Linux&logo=arch-linux&logoColor=white)](https://github.com/jjice/hxd/actions)
-[![Ubuntu](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Ubuntu&logo=ubuntu&logoColor=white)](https://github.com/jjice/hxd/actions)
-[![Windows](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=Windows&logo=windows&logoColor=white)](https://github.com/jjice/hxd/actions)
-[![macOS](https://img.shields.io/github/actions/workflow/status/jjice/hxd/ci.yml?label=macOS&logo=apple&logoColor=white)](https://github.com/jjice/hxd/actions)
+[![Arch Linux](https://img.shields.io/github/actions/workflow/status/jjice/hxed/ci.yml?label=Arch%20Linux&logo=arch-linux&logoColor=white)](https://github.com/jjice/hxed/actions)
+[![Ubuntu](https://img.shields.io/github/actions/workflow/status/jjice/hxed/ci.yml?label=Ubuntu&logo=ubuntu&logoColor=white)](https://github.com/jjice/hxed/actions)
+[![Windows](https://img.shields.io/github/actions/workflow/status/jjice/hxed/ci.yml?label=Windows&logo=windows&logoColor=white)](https://github.com/jjice/hxed/actions)
+[![macOS](https://img.shields.io/github/actions/workflow/status/jjice/hxed/ci.yml?label=macOS&logo=apple&logoColor=white)](https://github.com/jjice/hxed/actions)
 
 # ✨ Key Features
 
@@ -59,8 +59,8 @@ get-content build\install_manifest.txt | remove-item        <- Windows
 # 🕹️ Usage
 
 ```bash
-hxd [options] [filename]
-cat file.bin | hxd [options]
+hxed [options] [filename]
+cat file.bin | hxed [options]
 ```
 
 <br>
@@ -95,37 +95,37 @@ Notes:
 Basic hex dump:
 
 ```bash
-hxd example.txt
+hxed example.txt
 ```
 
 Smaller width:
 
 ```bash
-hxd -w 8 example.txt
+hxed -w 8 example.txt
 ```
 
 Adaptive heatmap on a binary file:
 
 ```bash
-hxd -hm adaptiv image.png
+hxed -hm adaptiv image.png
 ```
 
 Fixed heatmap and no ASCII column:
 
 ```bash
-hxd -hm fixed -a off sample.bin
+hxed -hm fixed -a off sample.bin
 ```
 
 Read a slice of a file:
 
 ```bash
-hxd -o 1024 -l 2048 sample.bin
+hxed -o 1024 -l 2048 sample.bin
 ```
 
 Use stdin:
 
 ```bash
-cat sample.bin | hxd -w 32
+cat sample.bin | hxed -w 32
 ```
 
 ## Output example
@@ -139,7 +139,7 @@ cat sample.bin | hxd -w 32
 <br>
 
 # 🤝 Contributing & Ideas
-- hxd is an open-source journey! 🗺️ I’m always looking for cool ideas to make binary analysis even better.
+- hxed is an open-source journey! 🗺️ I’m always looking for cool ideas to make binary analysis even better.
 
 - **Got a Bug? 🐛 Open an Issue.**
 
@@ -149,4 +149,4 @@ cat sample.bin | hxd -w 32
 
 <br>
 
-### ***"In binary we trust, in hex we dump." — hxd Team***
+### ***"In binary we trust, in hex we dump." — hxed Team***

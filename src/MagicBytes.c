@@ -1,5 +1,5 @@
 /*
- * hxd - A modern hex dumper
+ * hxed - A modern hex dumper
  * Copyright (c) 2026 Joshua Jallow
  * Licensed under the MIT License.
  * See LICENSE file in the project root for full license information.

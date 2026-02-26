@@ -1,6 +1,6 @@
 # 🛠 Project Roadmap & TODOs
 
-This document tracks the progress of **hxd**. Key focus areas include performance parity with `xxd`, robust testing, and advanced binary analysis features.
+This document tracks the progress of **hxed**. Key focus areas include performance parity with `xxd`, robust testing, and advanced binary analysis features.
 
 ---
 
