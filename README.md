@@ -1,4 +1,4 @@
-# 📂 hxd - A modern cross-platform hex-viewer
+# 📂 hxed - A modern cross-platform hex-viewer
 
 hxd is a small command-line tool written in C that prints binary data in a classic hex dump layout with optional coloring, heatmaps, and ASCII preview. No extern dependencies!
 
