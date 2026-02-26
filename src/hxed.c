@@ -14,7 +14,8 @@
 #include <ctype.h>
 #include "Utils.h"
 #include "Args.h"
-#include "MagicBytes.h"
+//#include "MagicBytes.h"
+
 
 #ifdef _WIN32
 #include <windows.h>
@@ -174,74 +175,130 @@ bool contains_query_in_line_or_overlap(
     int current_len, 
     options *option)
 {
+    // Fall 1: Kein Suchbegriff → alles ausgeben
     if (!option->search || option->search[0] == '\0') {
-        return true;   // nichts gesucht → alles ausgeben
+        return true;
     }
 
-    size_t needle_len = strlen((char *)option->search);
-    if (needle_len == 0) return true;
+    // ------------------------------------------------------
+    // Vorbereitung: Suchmuster je nach Modus
+    // ------------------------------------------------------
+    unsigned char needle_buf[256];          // temporärer Buffer für das echte Byte-Muster
+    size_t needle_len = 0;
+
+    if (option->search_hex) {
+        // Hex-Modus: "4d5a90" → {0x4d, 0x5a, 0x90}
+        const char *s = (const char *)option->search;
+        size_t slen = strlen(s);
+
+        needle_len = 0;
+        for (size_t i = 0; i < slen && needle_len < sizeof(needle_buf); ) {
+            // Leerzeichen / Trennzeichen überspringen
+            while (isspace((unsigned char)s[i])) i++;
+
+            if (i + 1 >= slen) break;
+
+            // oder noch besser – direkt im Aufruf casten (wie man es fast immer sieht):
+            char c1 = tolower((unsigned char)s[i]);
+            char c2 = tolower((unsigned char)s[i+1]);
+
+            // und bei isspace:
+            while (isspace((unsigned char)s[i])) i++;
+
+            unsigned char byte = 0;
+
+            // Erstes Nibble
+            if      (c1 >= '0' && c1 <= '9') byte = (c1 - '0') << 4;
+            else if (c1 >= 'a' && c1 <= 'f') byte = (c1 - 'a' + 10) << 4;
+            else break;  // ungültig
+
+            // Zweites Nibble
+            if      (c2 >= '0' && c2 <= '9') byte |= (c2 - '0');
+            else if (c2 >= 'a' && c2 <= 'f') byte |= (c2 - 'a' + 10);
+            else break;  // ungültig
+
+            needle_buf[needle_len++] = byte;
+            i += 2;
+        }
+
+        if (needle_len == 0) {
+            // ungültiger Hex-String → fail open oder false – hier fail open
+            return true;
+        }
+    }
+    else {
+        // ASCII-Modus: einfach den String als Bytes nehmen
+        needle_len = strlen((const char *)option->search);
+        if (needle_len == 0) return true;
+
+        // Kopieren in needle_buf (sicherheitshalber)
+        if (needle_len > sizeof(needle_buf)) needle_len = sizeof(needle_buf);
+        memcpy(needle_buf, option->search, needle_len);
+    }
+
+    // Jetzt haben wir in needle_buf[0..needle_len-1] das echte Byte-Muster
 
     // ------------------------------------------------------
-    // Fall 1: Komplett innerhalb der aktuellen Zeile
+    // Fall A: Komplett innerhalb der aktuellen Zeile
     // ------------------------------------------------------
     if (current_len >= (int)needle_len) {
         for (int i = 0; i <= current_len - (int)needle_len; i++) {
-            if (memcmp(current_line + i, option->search, needle_len) == 0) {
+            if (memcmp(current_line + i, needle_buf, needle_len) == 0) {
                 return true;
             }
         }
     }
 
     // ------------------------------------------------------
-    // Fall 2: Überlappung mit vorheriger Zeile (lookback + current)
+    // Fall B: Überlappung mit vorheriger Zeile (lookback + current)
     // ------------------------------------------------------
     if (lookback_len > 0 && current_len > 0) {
-
         size_t combined_len = lookback_len + current_len;
         if (combined_len < needle_len) goto save_lookback;
 
-        // Wir prüfen nur die möglichen Startpositionen, die in lookback beginnen
-        size_t max_start_in_lookback = lookback_len + current_len - needle_len;
-        if (max_start_in_lookback > lookback_len) max_start_in_lookback = lookback_len;
+        size_t max_start = lookback_len + current_len - needle_len;
+        if (max_start > lookback_len) max_start = lookback_len;
 
-        for (size_t start = 0; start <= max_start_in_lookback; start++) {
-
+        for (size_t start = 0; start <= max_start; start++) {
             bool match = true;
             for (size_t k = 0; k < needle_len; k++) {
                 size_t pos = start + k;
+                unsigned char byte;
 
                 if (pos < lookback_len) {
-                    if (lookback[pos] != option->search[k]) {
-                        match = false;
-                        break;
-                    }
+                    byte = lookback[pos];
                 } else {
-                    size_t idx_in_line = pos - lookback_len;
-                    if (idx_in_line >= (size_t)current_len ||
-                        current_line[idx_in_line] != option->search[k]) {
+                    size_t idx = pos - lookback_len;
+                    if (idx >= (size_t)current_len) {
                         match = false;
                         break;
                     }
+                    byte = current_line[idx];
+                }
+
+                if (byte != needle_buf[k]) {
+                    match = false;
+                    break;
                 }
             }
-
             if (match) return true;
         }
     }
 
-save_lookback:
-    // Alte lookback überschreiben / anhängen
-    if (current_len >= (int)needle_len - 1) {
-        // Nur die letzten (needle_len-1) Bytes behalten
-        memcpy(lookback, current_line + current_len - (needle_len - 1), needle_len - 1);
-        lookback_len = needle_len - 1;
+save_lookback:;
+    // ------------------------------------------------------
+    // Lookback aktualisieren – bleibt gleich
+    // ------------------------------------------------------
+    size_t keep = needle_len > 0 ? needle_len - 1 : 0;
+
+    if (current_len >= (int)keep) {
+        memcpy(lookback, current_line + current_len - keep, keep);
+        lookback_len = keep;
     } else {
-        // Zeile war kürzer → alles anhängen (selten)
         if (lookback_len + current_len > MAX_LOOKBACK) {
-            // im Extremfall verschieben (sollte fast nie passieren)
-            memmove(lookback, lookback + lookback_len + current_len - MAX_LOOKBACK,
-                    MAX_LOOKBACK - current_len);
-            lookback_len = MAX_LOOKBACK - current_len;
+            size_t shift = lookback_len + current_len - MAX_LOOKBACK;
+            memmove(lookback, lookback + shift, lookback_len - shift);
+            lookback_len -= shift;
         }
         memcpy(lookback + lookback_len, current_line, current_len);
         lookback_len += current_len;
@@ -279,7 +336,7 @@ void print_header(options *option) {
         }
         fputc('-', stdout);
     }
-    fputc('\n', stdout);
+    //fputc('\n', stdout);
 }
 
 // Main function to print the hex dump based on the provided options
@@ -499,16 +556,27 @@ void print_hex(options *option){
 
             // Writes the constructed line to the output (pager or stdout). 
             // Uses fwrite for binary safety, especially if line contains null bytes.
-            
-            bool should_print = true;
+            bool matches_search = (option->search == NULL || option->search[0] == '\0') ||
+                                  contains_query_in_line_or_overlap(buffer + processed, line_len, option);
 
-            if (option->search != NULL && option->search[0] != '\0') {
-                should_print = contains_query_in_line_or_overlap(buffer + processed, line_len, option);
-            }
+            if (matches_search && !is_space(option->buff_size, (unsigned char *)line)) {
+                // Treffer → vorherige Zeile (falls vorhanden) zuerst ausgeben
+                if (have_prev && prev_line_pos > 0) {
+                    fwrite(prev_line, 1, prev_line_pos, out);
+                }
 
-            if (should_print && !is_space(option->buff_size, (unsigned char *)line)) {
+                // aktuelle Zeile ausgeben
                 fwrite(line, 1, line_pos, out);
+
+                have_prev = false;   // verbraucht
             }
+            else {
+                // Kein Treffer → für die nächste Iteration merken
+                memcpy(prev_line, line, line_pos);
+                prev_line_pos = line_pos;
+                have_prev = true;
+            }
+            
 
 
             addr_display += line_len;

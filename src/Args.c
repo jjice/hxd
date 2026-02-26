@@ -335,6 +335,13 @@ options *get_options(int argc, char *argv[]) {
             }
 
             //search_len = (int) strlen(argv[x + 1]);
+            option->search = (unsigned char *) malloc(strlen(argv[x + 1]) + 1);
+            if (option->search == NULL) {
+                fprintf(stderr, "Error: Memory allocation failed for search string\n");
+                exit(EXIT_FAILURE);
+            }
+
+            //search_len = (int) strlen(argv[x + 1]);
             strcpy((char *)option->search, argv[x + 1]);
             option->search_ascii = true;
 

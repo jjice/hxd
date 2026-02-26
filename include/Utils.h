@@ -13,12 +13,12 @@
 #define BOLD            "\x1b[1m"
 #define DIM             "\x1b[2m"
 
-#define NON_PRINT_COLOR "\x1b[38;5;58m"     // Grey / Bright Black 
+#define NON_PRINT_COLOR "\x1b[38;5;187m"     // Grey / Bright Black 
 #define NULL_BYTE_COLOR "\x1b[38;5;8m"      // Standard Blau 
 #define ADDR_COLOR      "\x1b[38;5;214m"    // Bright Blue 
-#define HEX_VAL_COLOR   "\x1b[38;5;95m"     // Bright White 
+//#define HEX_VAL_COLOR   "\x1b[38;5;95m"     // Bright White 
 #define ASCII_COLOR     "\x1b[38;5;11m"     // Cyan 
-#define HEADER_COLOR    "\x1b[38;5;214m"    // Bright Yellow 
+#define HEADER_COLOR    "\x1b[38;5;222m"    // Bright Yellow 
 
 static const char *heatmap_colors[16] = {
     "\x1b[38;5;232m",  // 0
