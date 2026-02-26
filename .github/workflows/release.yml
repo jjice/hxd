@@ -36,17 +36,17 @@ jobs:
       - name: Prepare Artifact
         shell: bash
         run: |
-          # Wir suchen gezielt in build ODER build/Release (für Windows)
-          if [ -f "build/${{ matrix.executable }}" ]; then
-            cp "build/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
-          elif [ -f "build/Release/${{ matrix.executable }}" ]; then
-            cp "build/Release/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
+          # Wir suchen im neuen 'bin' Ordner, den dein CMake erstellt hat
+          if [ -f "build/bin/${{ matrix.executable }}" ]; then
+            cp "build/bin/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
+          elif [ -f "build/bin/Release/${{ matrix.executable }}" ]; then
+            cp "build/bin/Release/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
           else
-            echo "❌ ERROR: ${{ matrix.executable }} wurde nirgendwo gefunden!"
+            echo "❌ ERROR: ${{ matrix.executable }} wurde nicht in build/bin gefunden!"
             ls -R build
             exit 1
           fi
-          echo "✅ File copied to: ./${{ matrix.asset_name }}"
+          echo "✅ File successfully copied to: ./${{ matrix.asset_name }}"
 
       - name: Release
         uses: softprops/action-gh-release@v2
