@@ -387,7 +387,6 @@ options *get_options(int argc, char *argv[]) {
         else if (strcmp(argv[x], "-sk") == 0 || (strcmp(argv[x], "--skip-header") == 0)) {
             // Help flag.
             option->skip_header = true;
-            exit(EXIT_SUCCESS);
         }
 
         else {

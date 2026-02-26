@@ -60,3 +60,6 @@ This document tracks the progress of **hxd**. Key focus areas include performanc
 - [x] Multi-platform CI/CD (Windows, Linux, macOS).
 - [x] Entropy Visualization
 - [x] Heatmap (fixed | adaptiv)
+
+## 🐞 Bugs
+- [ ] hxed.exe test -l 100 -hm adaptiv : fixed adaptiv heatmap while limit is set

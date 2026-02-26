@@ -24,8 +24,16 @@
 
 static unsigned char buffer[16384] = {0}; // Static buffer to avoid dynamic allocation overhead. Size is MAX_BUFF_SIZE.
 
+static unsigned char lookback[64] = {0};           // z. B. 64 → reicht für die meisten Magic-Bytes
+static size_t lookback_len = 0;                    // wie viele Bytes sind gültig
+static const size_t MAX_LOOKBACK = sizeof(lookback);
+
+static char prev_line[4096] = {0};
+static int  prev_line_pos = 0;
+static bool have_prev = false;
+
 // Read a chunk of the file into the buffer, starting from read_start and respecting read_limit
-void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t read_limit, unsigned char *_buffer) {
+void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t read_limit, unsigned char *_buffer, bool _no_seek) {
     
     // Return if file is stdin
     if (file == stdin) {
@@ -59,6 +67,13 @@ void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t 
 
     // Read filecontent to buffer, output read bytes
     *out_read = fread(_buffer, 1, to_read, file);
+
+    if (_no_seek) {
+        // If no_seek is true, we do not want to change the file cursor position after reading.
+        // So we seek back to the original position before the read.
+        fseek(file, current_pos, SEEK_SET);
+    }
+
     return;
 }
 
@@ -120,7 +135,7 @@ void find_extrema (unsigned char *_max, unsigned char *_min, FILE *file) {
 
     // Read through the file in chunks and update min/max values
     while (1) {
-        read_stream_to_buffer(&read_bytes, file, 0, file_size, _buffer);
+        read_stream_to_buffer(&read_bytes, file, 0, file_size, _buffer, false);
         if (read_bytes <= 0) break;
 
         for (size_t index = 0; index < (size_t) read_bytes; index++) {
@@ -154,6 +169,119 @@ float calc_entropy (unsigned char *data, size_t len) {
     return entropy;
 }
 
+bool contains_query_in_line_or_overlap(
+    unsigned char *current_line, 
+    int current_len, 
+    options *option)
+{
+    if (!option->search || option->search[0] == '\0') {
+        return true;   // nichts gesucht → alles ausgeben
+    }
+
+    size_t needle_len = strlen((char *)option->search);
+    if (needle_len == 0) return true;
+
+    // ------------------------------------------------------
+    // Fall 1: Komplett innerhalb der aktuellen Zeile
+    // ------------------------------------------------------
+    if (current_len >= (int)needle_len) {
+        for (int i = 0; i <= current_len - (int)needle_len; i++) {
+            if (memcmp(current_line + i, option->search, needle_len) == 0) {
+                return true;
+            }
+        }
+    }
+
+    // ------------------------------------------------------
+    // Fall 2: Überlappung mit vorheriger Zeile (lookback + current)
+    // ------------------------------------------------------
+    if (lookback_len > 0 && current_len > 0) {
+
+        size_t combined_len = lookback_len + current_len;
+        if (combined_len < needle_len) goto save_lookback;
+
+        // Wir prüfen nur die möglichen Startpositionen, die in lookback beginnen
+        size_t max_start_in_lookback = lookback_len + current_len - needle_len;
+        if (max_start_in_lookback > lookback_len) max_start_in_lookback = lookback_len;
+
+        for (size_t start = 0; start <= max_start_in_lookback; start++) {
+
+            bool match = true;
+            for (size_t k = 0; k < needle_len; k++) {
+                size_t pos = start + k;
+
+                if (pos < lookback_len) {
+                    if (lookback[pos] != option->search[k]) {
+                        match = false;
+                        break;
+                    }
+                } else {
+                    size_t idx_in_line = pos - lookback_len;
+                    if (idx_in_line >= (size_t)current_len ||
+                        current_line[idx_in_line] != option->search[k]) {
+                        match = false;
+                        break;
+                    }
+                }
+            }
+
+            if (match) return true;
+        }
+    }
+
+save_lookback:
+    // Alte lookback überschreiben / anhängen
+    if (current_len >= (int)needle_len - 1) {
+        // Nur die letzten (needle_len-1) Bytes behalten
+        memcpy(lookback, current_line + current_len - (needle_len - 1), needle_len - 1);
+        lookback_len = needle_len - 1;
+    } else {
+        // Zeile war kürzer → alles anhängen (selten)
+        if (lookback_len + current_len > MAX_LOOKBACK) {
+            // im Extremfall verschieben (sollte fast nie passieren)
+            memmove(lookback, lookback + lookback_len + current_len - MAX_LOOKBACK,
+                    MAX_LOOKBACK - current_len);
+            lookback_len = MAX_LOOKBACK - current_len;
+        }
+        memcpy(lookback + lookback_len, current_line, current_len);
+        lookback_len += current_len;
+    }
+
+    return false;
+}
+
+void print_header(options *option) {
+
+    print_color(HEADER_COLOR, option->color);
+    if (option->pipeline) printf("Hexdump for <pipe>:\n\n");
+    else printf("\nHexdump for <%s>:\n\n", option->filename);
+    print_color(RESET, option->color);
+    
+    // Prints spaces to align column headers with the hex data area.
+    printf("%*s", 11, " ");
+    
+    // Prints column headers (offsets within the line: 00, 01, 02...).
+    for (int i = 0; i < option->buff_size; i++) {
+        printf("%02X ", i);
+    }
+    
+    // Calculates the total length of the separating line based on buff_size and ASCII flag.
+    int n = 0;
+    if (option->ascii == true) n = 12 + option->buff_size * 3 + option->buff_size; 
+    else n = 10 + option->buff_size * 3;
+    
+    fputc('\n', stdout);
+    
+    // Prints the horizontal separator line. Includes logic to place a '+' if ASCII is enabled.
+    for (int i = 0; i < n; i++) {
+        if (option->ascii == true && i == 11 + option->buff_size * 3) {
+            fputc('+', stdout);
+        }
+        fputc('-', stdout);
+    }
+    fputc('\n', stdout);
+}
+
 // Main function to print the hex dump based on the provided options
 void print_hex(options *option){
     
@@ -172,40 +300,8 @@ void print_hex(options *option){
     addr_display += option->offset_read;
 
     // Optional goto when raw
-    if (option->raw) goto SKIP_HEADER;
-
-    // --- Header Formatting ---
-    print_color(HEADER_COLOR, option->color);
-    if (option->pipeline) printf("\nHexdump for <pipe>:\n\n");
-    else printf("\nHexdump for <%s>:\n\n", option->filename);
-    print_color(RESET, option->color);
-    
-    // Prints spaces to align column headers with the hex data area.
-    printf("%*s", 11, " ");
-    
-    // Prints column headers (offsets within the line: 00, 01, 02...).
-    for (int i = 0; i < option->buff_size; i++) {
-        printf("%02X ", i);
-    }
-    
-    // Calculates the total length of the separating line based on buff_size and ASCII flag.
-    int n = 0;
-    if (option->ascii == true) n = 12 + option->buff_size * 3 + option->buff_size; 
-    else n = 10 + option->buff_size * 3;
-    
-    fputc('\n', out);
-    
-    // Prints the horizontal separator line. Includes logic to place a '+' if ASCII is enabled.
-    for (int i = 0; i < n; i++) {
-        if (option->ascii == true && i == 11 + option->buff_size * 3) {
-            fputc('+', out);
-        }
-        fputc('-', out);
-    }
-    fputc('\n', out);
-
-SKIP_HEADER:
-    ;
+    if (!option->raw && !option->skip_header) print_header(option);
+    if (!option->raw) fputc('\n', out);
 
     FILE *file = NULL;
     
@@ -243,11 +339,12 @@ SKIP_HEADER:
     
     // --- Hex Output Loop ---
     while (1) {
-        read_stream_to_buffer(&bytes_read, file, option->offset_read, option->limit_read, buffer);
+        
+        read_stream_to_buffer(&bytes_read, file, option->offset_read, option->limit_read, buffer, false);
         if (bytes_read == 0) break;
 
         int processed = 0;
-        unsigned char _buffer[MAX_BUFF_SIZE] = {0};
+        //unsigned char _buffer[MAX_BUFF_SIZE] = {0};
         
         // Process the buffer in lines of buff_size, ensuring we don't exceed bytes_read.
         while (processed < bytes_read) {
@@ -375,7 +472,7 @@ SKIP_HEADER:
                     }
                     else line_pos += snprintf(line + line_pos, sizeof(line) - line_pos, "%s%c", col, disp);
                     
-                    _buffer[processed + i] = c;
+                    //_buffer[processed + i] = c;
                     char_written += 1;
                 }
             }
@@ -383,7 +480,7 @@ SKIP_HEADER:
             // Heatmap bar logic: If heatmap is enabled, calculates the entropy of the current line 
             // and appends a colored bar to visually represent the entropy level.
             if (option->entropie) {
-                float entropy = calc_entropy(_buffer, line_len);
+                float entropy = calc_entropy(buffer, line_len);
 
                 const char* bar;
                 if (entropy < 2.0)      bar = " ";
@@ -402,10 +499,17 @@ SKIP_HEADER:
 
             // Writes the constructed line to the output (pager or stdout). 
             // Uses fwrite for binary safety, especially if line contains null bytes.
+            
+            bool should_print = true;
 
-            if (!is_space(option->buff_size, (unsigned char *) line)) {
+            if (option->search != NULL && option->search[0] != '\0') {
+                should_print = contains_query_in_line_or_overlap(buffer + processed, line_len, option);
+            }
+
+            if (should_print && !is_space(option->buff_size, (unsigned char *)line)) {
                 fwrite(line, 1, line_pos, out);
             }
+
 
             addr_display += line_len;
             processed += line_len;

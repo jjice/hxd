@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define MAX_SEARCH_LEN 1024
+#define MAX_SEARCH_LEN 32
 
 //static unsigned char search[MAX_SEARCH_LEN] = {0};
 //static int search_len = 0; 
