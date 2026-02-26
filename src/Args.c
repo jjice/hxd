@@ -22,6 +22,10 @@
     #include <unistd.h>
 #endif
 
+#define MAX_SEARCH_LEN 1024
+
+static char search[MAX_SEARCH_LEN] = {0}; 
+
 // Function to read a chunk of the file into the buffer, 
 // starting from read_start and respecting read_limit
 options *get_options(int argc, char *argv[]) {
@@ -68,6 +72,8 @@ options *get_options(int argc, char *argv[]) {
         "  -s,  --string  <on|off>           Enable string highlighting / strings (default: off)\n"
         "  -p,  --pager   <on|off>           Pipe output through pager (more/less) (default: off)\n"
         "  -e,  --entropy <on|off>           Show entropy graph per line (default: off)\n"
+        "  -sa, --search-ascii  '<ascii chars>'  Search for all lines with input str as ascii\n"
+        "  -sh, --search-hex    '<hex chars>'    Search for all line with input str as hex\n"
         "  -ro, --raw                        Raw output to console | file (pipe)\n"
         "  -h,  --help                       Show this help message and exit\n"
         "\n"
@@ -391,6 +397,42 @@ options *get_options(int argc, char *argv[]) {
             }
         }
 
+        else if (strcmp(argv[x], "-sa") == 0 || (strcmp(argv[x], "--search-ascii") == 0)){
+            // Search quarry argument.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: Search requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+
+            if (strlen(argv[x + 1]) > MAX_SEARCH_LEN) {
+                printf("Search string is too long ( .... > %d )\n", (int) MAX_SEARCH_LEN);
+                exit(EXIT_FAILURE);
+            }
+            
+            strcpy(search, argv[x + 1]);
+
+            x++;
+        }
+
+        else if (strcmp(argv[x], "-sh") == 0 || (strcmp(argv[x], "--search-hex") == 0)){
+            // Search quarry argument.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: Search requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+
+            if (strlen(argv[x + 1]) > MAX_SEARCH_LEN) {
+                printf("Search string is too long ( .... > %d )\n", (int) MAX_SEARCH_LEN);
+                exit(EXIT_FAILURE);
+            }
+            
+            strcpy(search, argv[x + 1]);
+
+            x++;
+        }
+
         else if (strcmp(argv[x], "-ro") == 0 || (strcmp(argv[x], "--raw") == 0)){
             // RAW flag toggle argument.
             option->raw = true;
@@ -404,7 +446,7 @@ options *get_options(int argc, char *argv[]) {
 
         else {
             // Unrecognized argument leads to help display and exit.
-            printf("%s", help_short);
+            printf("Unrecognized argument: %s\n%s", argv[x], help_short);
             exit(EXIT_FAILURE);
         }
     }
@@ -437,3 +479,4 @@ options *get_options(int argc, char *argv[]) {
 
     return option;
 }
+
