@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include "Args.h"
+#include "version.h"
 
 // issatty and fileno for Windows compatibility
 #ifdef _WIN32
@@ -21,10 +22,6 @@
 #else
     #include <unistd.h>
 #endif
-
-#define MAX_SEARCH_LEN 1024
-
-static char search[MAX_SEARCH_LEN] = {0}; 
 
 // Function to read a chunk of the file into the buffer, 
 // starting from read_start and respecting read_limit
@@ -50,44 +47,56 @@ options *get_options(int argc, char *argv[]) {
     option->entropie = false;
     option->string = false;
     option->raw = false;
+    option->search_ascii = false;
+    option->search_hex = false;
+    option->skip_header = false;
+    option->search = NULL;
 
     // Help message string.
     static const char *help =
         "\n"
-        "hxd - A modern hex dumper\n"
+        "hxed - A modern hex viewer\n"
         "Copyright (c) 2026 Joshua Jallow   MIT License\n"
         "\n"
         "Usage:\n"
-        "  hxd [options] [filename]\n"
-        "  cat file.bin | hxd [options]\n"
+        "  hxed [options] [filename]\n"
+        "  cat file.bin | hxed [options]\n"
         "\n"
         "Options:\n"
-        "  -f,  --file    <filename>         Input file (optional if data comes from stdin)\n"
-        "  -hm, --heatmap <adaptiv|fixed>    Show Colors as Heatmap with 16 colors (default: none)\n"
-        "  -w,  --width   <num>              Bytes per line (default: 16) (0 -> no new line)\n"
-        "  -a,  --ascii   <on|off>           Show ASCII representation column (default: on)\n"
-        "  -o,  --offset  <num>              Start reading at this byte offset (default: 0)\n"
-        "  -l,  --limit   <num>              Stop after this many bytes (default: read to EOF)\n"
-        "  -c,  --color   <on|off>           Enable syntax highlighting / colors (default: on)\n"
-        "  -s,  --string  <on|off>           Enable string highlighting / strings (default: off)\n"
-        "  -p,  --pager   <on|off>           Pipe output through pager (more/less) (default: off)\n"
-        "  -e,  --entropy <on|off>           Show entropy graph per line (default: off)\n"
-        "  -sa, --search-ascii  '<ascii chars>'  Search for all lines with input str as ascii\n"
-        "  -sh, --search-hex    '<hex chars>'    Search for all line with input str as hex\n"
-        "  -ro, --raw                        Raw output to console | file (pipe)\n"
-        "  -h,  --help                       Show this help message and exit\n"
+        "  -f,  --file            <filename>         Input file (optional if data comes from stdin)\n"
+        "  -hm, --heatmap         <adaptiv|fixed>    Show Colors as Heatmap with 16 colors (default: none)\n"
+        "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line)\n"
+        "  -a,  --ascii                              Show ASCII representation column (default: on)\n"
+        "  -na, --no-ascii                           Hide ASCII representation column\n"
+        "  -o,  --offset          <num>              Start reading at this byte offset (default: 0)\n"
+        "  -l,  --limit           <num>              Stop after this many bytes (default: read to EOF)\n"
+        "  -c,  --color                              Enable syntax highlighting / colors (default: on)\n"
+        "  -nc, --no-color                           Disable syntax highlighting / colors\n"
+        "  -s,  --string                             Enable string highlighting (default: off)\n"
+        "  -ns, --no-string                          Disable string highlighting\n"
+        "  -p,  --pager                              Pipe output through pager (more/less) (default: off)\n"
+        "  -np, --no-pager                           Disable pager output\n"
+        "  -e,  --entropy                            Show entropy graph per line (default: off)\n"
+        "  -ne, --no-entropy                         Disable entropy graph\n"
+        "  -sa, --search-ascii    '<ascii chars>'    Search for all lines with input str as ascii\n"
+        "  -sh, --search-hex      '<hex chars>'      Search for all line with input str as hex\n"
+        "  -ro, --raw                                Raw output to console | file (pipe)\n"
+        "  -h,  --help                               Show this help message and exit\n"
+        "  -v,  --version                            Show version information and exit\n"
         "\n"
         "Examples:\n"
-        "  hxd image.png                     # normal file\n"
-        "  hxd -w 32 -a off secret.bin       # 32 bytes/line, kein ASCII\n"
-        "  hxd file | less -R                # output inside Pager with colors\n"
-        "  echo 'Hello World' | hxd          # pipeline to hxd\n"
-        "  hxd -w 0 -ro test > o.txt         # raw output without newlines into a file\n"
+        "  hxed image.png                     # normal file\n"
+        "  hxed -w 32 -na secret.bin          # 32 bytes/line, no ASCII\n"
+        "  hxed -nc file | less -R            # output without colors\n"
+        "  echo 'Hello World' | hxed          # pipeline to hxed\n"
+        "  hxed -w 0 -ro test > o.txt         # raw output without newlines into a file\n"
+        "  hxed -s -c data.bin                # with string highlighting and colors\n"
         "\n"
         "Notes:\n"
         "  * Offsets and limits must be positive integers.\n"
         "  * --offset and --limit cannot be combined in a way that limit < offset.\n"
         "  * When reading from stdin (pipe), filename is not required.\n"
+        "  * Boolean flags toggle their respective feature without needing on/off values.\n"
         "\n";
 
     char help_short[] = "See -h for more information\n";
@@ -169,30 +178,13 @@ options *get_options(int argc, char *argv[]) {
         }
 
         else if (strcmp(argv[x], "-a") == 0 || (strcmp(argv[x], "--ascii") == 0)){
-            // ASCII flag toggle argument.
-            if (x + 1 >= argc) {
-                fprintf(stderr, "Error: ASCII requires an argument\n");
-                printf("%s", help_short);
-                exit(EXIT_FAILURE);
-            }
-            else{
-                // Check for "on"
-                if (strcmp("on", argv[x + 1]) == 0) {
-                    option->ascii = true;
-                    x++;
-                }
-                // Check for "off"
-                else if (strcmp("off", argv[x + 1]) == 0) {
-                    option->ascii = false;
-                    x++;
-                }
-                // Invalid value provided.
-                else {
-                    printf("Invalid argument for ASCII <%s>\n", argv[x + 1]);
-                    printf("%s", help_short);
-                    exit(EXIT_FAILURE);
-                }
-            }
+            // ASCII flag - enable ASCII column
+            option->ascii = true;
+        }
+
+        else if (strcmp(argv[x], "-na") == 0 || (strcmp(argv[x], "--no-ascii") == 0)){
+            // No ASCII flag - disable ASCII column
+            option->ascii = false;
         }
 
         else if (strcmp(argv[x], "-o") == 0 || (strcmp(argv[x], "--offset") == 0)) {
@@ -290,111 +282,43 @@ options *get_options(int argc, char *argv[]) {
         }
 
         else if (strcmp(argv[x], "-c") == 0 || (strcmp(argv[x], "--color") == 0)){
-            // ASCII flag toggle argument.
-            if (x + 1 >= argc) {
-                fprintf(stderr, "Error: color requires an argument\n");
-                printf("%s", help_short);
-                exit(EXIT_FAILURE);
-            }
-            else{
-                // Check for "on"
-                if (strcmp("on", argv[x + 1]) == 0) {
-                    option->color = true;
-                    x++;
-                }
-                // Check for "off"
-                else if (strcmp("off", argv[x + 1]) == 0) {
-                    option->color = false;
-                    x++;
-                }
-                // Invalid value provided.
-                else {
-                    printf("Invalid argument for color <%s>\n", argv[x + 1]);
-                    printf("%s", help_short);
-                    exit(EXIT_FAILURE);
-                }
-            }
+            // Color flag - enable colors
+            option->color = true;
+        }
+
+        else if (strcmp(argv[x], "-nc") == 0 || (strcmp(argv[x], "--no-color") == 0)){
+            // No color flag - disable colors
+            option->color = false;
         }
 
         else if (strcmp(argv[x], "-s") == 0 || (strcmp(argv[x], "--string") == 0)){
-            // ASCII flag toggle argument.
-            if (x + 1 >= argc) {
-                fprintf(stderr, "Error: string requires an argument\n");
-                printf("%s", help_short);
-                exit(EXIT_FAILURE);
-            }
-            else{
-                // Check for "on"
-                if (strcmp("on", argv[x + 1]) == 0) {
-                    option->string = true;
-                    x++;
-                }
-                // Check for "off"
-                else if (strcmp("off", argv[x + 1]) == 0) {
-                    option->string = false;
-                    x++;
-                }
-                // Invalid value provided.
-                else {
-                    printf("Invalid argument for string <%s>\n", argv[x + 1]);
-                    printf("%s", help_short);
-                    exit(EXIT_FAILURE);
-                }
-            }
+            // String flag - enable string highlighting
+            option->string = true;
+        }
+
+        else if (strcmp(argv[x], "-ns") == 0 || (strcmp(argv[x], "--no-string") == 0)){
+            // No string flag - disable string highlighting
+            option->string = false;
         }
 
         else if (strcmp(argv[x], "-p") == 0 || (strcmp(argv[x], "--pager") == 0)) {
-            // ASCII flag toggle argument.
-            if (x + 1 >= argc) {
-                fprintf(stderr, "Error: pager requires an argument\n");
-                printf("%s", help_short);
-                exit(EXIT_FAILURE);
-            }
-            else{
-                // Check for "on"
-                if (strcmp("on", argv[x + 1]) == 0) {
-                    option->pager = true;
-                    x++;
-                }
-                // Check for "off"
-                else if (strcmp("off", argv[x + 1]) == 0) {
-                    option->pager = false;
-                    x++;
-                }
-                // Invalid value provided.
-                else {
-                    printf("Invalid argument for pager <%s>\n", argv[x + 1]);
-                    printf("%s", help_short);
-                    exit(EXIT_FAILURE);
-                }
-            }
+            // Pager flag - enable pager
+            option->pager = true;
+        }
+
+        else if (strcmp(argv[x], "-np") == 0 || (strcmp(argv[x], "--no-pager") == 0)) {
+            // No pager flag - disable pager
+            option->pager = false;
         }
 
         else if (strcmp(argv[x], "-e") == 0 || (strcmp(argv[x], "--entropy") == 0)){
-            // Entropy flag toggle argument.
-            if (x + 1 >= argc) {
-                fprintf(stderr, "Error: entropy requires an argument\n");
-                printf("%s", help_short);
-                exit(EXIT_FAILURE);
-            }
-            else{
-                // Check for "on"
-                if (strcmp("on", argv[x + 1]) == 0) {
-                    option->entropie = true;
-                    x++;
-                }
-                // Check for "off"
-                else if (strcmp("off", argv[x + 1]) == 0) {
-                    option->entropie = false;
-                    x++;
-                }
-                // Invalid value provided.
-                else {
-                    printf("Invalid argument for entropy <%s>\n", argv[x + 1]);
-                    printf("%s", help_short);
-                    exit(EXIT_FAILURE);
-                }
-            }
+            // Entropy flag - enable entropy
+            option->entropie = true;
+        }
+
+        else if (strcmp(argv[x], "-ne") == 0 || (strcmp(argv[x], "--no-entropy") == 0)){
+            // No entropy flag - disable entropy
+            option->entropie = false;
         }
 
         else if (strcmp(argv[x], "-sa") == 0 || (strcmp(argv[x], "--search-ascii") == 0)){
@@ -409,8 +333,10 @@ options *get_options(int argc, char *argv[]) {
                 printf("Search string is too long ( .... > %d )\n", (int) MAX_SEARCH_LEN);
                 exit(EXIT_FAILURE);
             }
-            
-            strcpy(search, argv[x + 1]);
+
+            //search_len = (int) strlen(argv[x + 1]);
+            strcpy((char *)option->search, argv[x + 1]);
+            option->search_ascii = true;
 
             x++;
         }
@@ -428,7 +354,15 @@ options *get_options(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             
-            strcpy(search, argv[x + 1]);
+            //search_len = (int) strlen(argv[x + 1]);
+            option->search = (unsigned char *) malloc(strlen(argv[x + 1]) + 1);
+            if (option->search == NULL) {
+                fprintf(stderr, "Error: Memory allocation failed for search string\n");
+                exit(EXIT_FAILURE);
+            }
+
+            strcpy((char *)option->search, argv[x + 1]);
+            option->search_hex = true;
 
             x++;
         }
@@ -441,6 +375,18 @@ options *get_options(int argc, char *argv[]) {
         else if (strcmp(argv[x], "-h") == 0 || (strcmp(argv[x], "--help") == 0)) {
             // Help flag.
             printf("%s", help);
+            exit(EXIT_SUCCESS);
+        }
+
+        else if (strcmp(argv[x], "-v") == 0 || (strcmp(argv[x], "--version") == 0)) {
+            // Help flag.
+            printf("%s", HXED_VERSION);
+            exit(EXIT_SUCCESS);
+        }
+
+        else if (strcmp(argv[x], "-sk") == 0 || (strcmp(argv[x], "--skip-header") == 0)) {
+            // Help flag.
+            option->skip_header = true;
             exit(EXIT_SUCCESS);
         }
 

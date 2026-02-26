@@ -11,6 +11,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define MAX_SEARCH_LEN 1024
+
+//static unsigned char search[MAX_SEARCH_LEN] = {0};
+//static int search_len = 0; 
+
 // options (no getopt)
 typedef struct {
     char *filename;     // Path to the file to be read.
@@ -24,8 +29,11 @@ typedef struct {
     bool string;        // Flag to determine if strings shoud be highlighted
     bool pager;         // Flag to determine if output should be sent to a pager (e.g., less)
     bool entropie;      // Future options: -e, --entropy to show entropy graph per line
-    bool raw;           // Flag to determine if output should be raw      
-    unsigned char *search; // Search string
+    bool raw;           // Flag to determine if output should be raw
+    bool search_ascii;  // Flag to determine if search for ascii string is active
+    bool search_hex;    // Flag to determine if search for hex string is active      
+    bool skip_header;   // Flag to determine if header will be skipped
+    unsigned char *search; // Pointer to the search string (either ASCII or hex, depending on flags)
 } options;
 
 options *get_options(int argc, char *argv[]);
