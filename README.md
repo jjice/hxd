@@ -15,6 +15,7 @@
 | | Feature | Description |
 |---|---|---|
 | 📟 | **Classic Layout** | Perfectly aligned hex bytes, addresses, and ASCII preview |
+| 📦 | **Raw Output Mode** | Raw output to a file or to a pipe |
 | 🌈 | **Adaptive Heatmaps** | Visualize data intensity with 16-color `adaptive` or `fixed` modes |
 | 🔍 | **Semantic Coloring** | Instantly distinguish printable text, null bytes, and control characters |
 | 🧵 | **String Highlighting** | Specialized mode to make embedded strings pop |
