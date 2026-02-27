@@ -21,7 +21,7 @@ typedef struct {
 
 #define MAGIC_MAX_LEN 16
 
-extern const MagicSignature magic_signatures[];
-extern const size_t magic_signatures_count;
+extern const int Magic_Signatures_Count;
+extern const MagicSignature Magic_Signatures[];
 
 #endif

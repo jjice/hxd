@@ -19,6 +19,7 @@
 //#define HEX_VAL_COLOR   "\x1b[38;5;95m"     // Bright White 
 #define ASCII_COLOR     "\x1b[38;5;11m"     // Cyan 
 #define HEADER_COLOR    "\x1b[38;5;222m"    // Bright Yellow 
+#define MAGIC_COLOR     "\x1b[38;5;202m"    // Orange Magic Byte Highlight
 
 static const char *heatmap_colors[16] = {
     "\x1b[38;5;232m",  // 0

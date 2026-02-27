@@ -1,0 +1,13 @@
+# Lösche den Tag lokal und auf GitHub
+git tag -d v1.0.0
+git push --delete origin v1.0.0
+
+# Erstelle ihn neu und pushe (nachdem du die YAML gefixt hast)
+git add .
+git commit -m "fix: add release permissions to workflow"
+git tag v1.0.0
+git push origin main
+git push origin v1.0.0
+
+wenns garnicht geht
+git push origin :refs/tags/v1.1.2

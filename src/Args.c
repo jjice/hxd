@@ -49,7 +49,7 @@ options *get_options(int argc, char *argv[]) {
     option->raw = false;
     option->search_ascii = false;
     option->search_hex = false;
-    option->skip_header = false;
+    option->skip_header = true;
     option->search = NULL;
 
     // Help message string.
@@ -68,6 +68,7 @@ options *get_options(int argc, char *argv[]) {
         "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line)\n"
         "  -a,  --ascii                              Show ASCII representation column (default: on)\n"
         "  -na, --no-ascii                           Hide ASCII representation column\n"
+        "  -th, --toggle-header                      Show header with file info and magic byte detection\n"
         "  -o,  --offset          <num>              Start reading at this byte offset (default: 0)\n"
         "  -l,  --limit           <num>              Stop after this many bytes (default: read to EOF)\n"
         "  -c,  --color                              Enable syntax highlighting / colors (default: on)\n"
@@ -94,6 +95,7 @@ options *get_options(int argc, char *argv[]) {
         "\n"
         "Notes:\n"
         "  * Offsets and limits must be positive integers.\n"
+        "  * Magic byte detection is inactive if offset is set\n"
         "  * --offset and --limit cannot be combined in a way that limit < offset.\n"
         "  * When reading from stdin (pipe), filename is not required.\n"
         "  * Boolean flags toggle their respective feature without needing on/off values.\n"
@@ -391,9 +393,9 @@ options *get_options(int argc, char *argv[]) {
             exit(EXIT_SUCCESS);
         }
 
-        else if (strcmp(argv[x], "-sk") == 0 || (strcmp(argv[x], "--skip-header") == 0)) {
+        else if (strcmp(argv[x], "-th") == 0 || (strcmp(argv[x], "--toggle-header") == 0)) {
             // Help flag.
-            option->skip_header = true;
+            option->skip_header = false;
         }
 
         else {

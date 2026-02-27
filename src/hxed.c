@@ -6,6 +6,7 @@
  */
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -14,7 +15,7 @@
 #include <ctype.h>
 #include "Utils.h"
 #include "Args.h"
-//#include "MagicBytes.h"
+#include "MagicBytes.h"
 
 
 #ifdef _WIN32
@@ -170,77 +171,72 @@ float calc_entropy (unsigned char *data, size_t len) {
     return entropy;
 }
 
+// Check for search-signatures in the header of the file stream and print matches
 bool contains_query_in_line_or_overlap(
     unsigned char *current_line, 
     int current_len, 
     options *option)
 {
-    // Fall 1: Kein Suchbegriff → alles ausgeben
-    if (!option->search || option->search[0] == '\0') {
+    // If no search query is set, we consider it a match (fail open).
+        if (!option->search || option->search[0] == '\0') {
         return true;
     }
 
-    // ------------------------------------------------------
-    // Vorbereitung: Suchmuster je nach Modus
-    // ------------------------------------------------------
-    unsigned char needle_buf[256];          // temporärer Buffer für das echte Byte-Muster
+    // Convert the search query (ASCII or hex) into a byte array for comparison. 
+    // We use a fixed-size buffer (e.g., 256 bytes) to hold the converted search pattern, and keep track of its length.
+    unsigned char needle_buf[256];
     size_t needle_len = 0;
 
     if (option->search_hex) {
-        // Hex-Modus: "4d5a90" → {0x4d, 0x5a, 0x90}
+        // hex-mode: "4d5a90" → {0x4d, 0x5a, 0x90}
         const char *s = (const char *)option->search;
         size_t slen = strlen(s);
 
         needle_len = 0;
         for (size_t i = 0; i < slen && needle_len < sizeof(needle_buf); ) {
-            // Leerzeichen / Trennzeichen überspringen
+            // whitespaceskipping: "4d 5a 90" → "4d5a90"
             while (isspace((unsigned char)s[i])) i++;
 
             if (i + 1 >= slen) break;
 
-            // oder noch besser – direkt im Aufruf casten (wie man es fast immer sieht):
+           
             char c1 = tolower((unsigned char)s[i]);
             char c2 = tolower((unsigned char)s[i+1]);
 
-            // und bei isspace:
+           
             while (isspace((unsigned char)s[i])) i++;
 
             unsigned char byte = 0;
 
-            // Erstes Nibble
+            // first nibble
             if      (c1 >= '0' && c1 <= '9') byte = (c1 - '0') << 4;
             else if (c1 >= 'a' && c1 <= 'f') byte = (c1 - 'a' + 10) << 4;
-            else break;  // ungültig
+            else break;
 
-            // Zweites Nibble
+            // lower nibble
             if      (c2 >= '0' && c2 <= '9') byte |= (c2 - '0');
             else if (c2 >= 'a' && c2 <= 'f') byte |= (c2 - 'a' + 10);
-            else break;  // ungültig
+            else break;
 
             needle_buf[needle_len++] = byte;
             i += 2;
         }
 
         if (needle_len == 0) {
-            // ungültiger Hex-String → fail open oder false – hier fail open
+            // No valid hex bytes found in the search string, consider it a match (fail open).
             return true;
         }
     }
     else {
-        // ASCII-Modus: einfach den String als Bytes nehmen
+        // ascii-mode: "MZ" → {0x4d, 0x5a}
         needle_len = strlen((const char *)option->search);
         if (needle_len == 0) return true;
 
-        // Kopieren in needle_buf (sicherheitshalber)
+
         if (needle_len > sizeof(needle_buf)) needle_len = sizeof(needle_buf);
         memcpy(needle_buf, option->search, needle_len);
     }
 
-    // Jetzt haben wir in needle_buf[0..needle_len-1] das echte Byte-Muster
-
-    // ------------------------------------------------------
-    // Fall A: Komplett innerhalb der aktuellen Zeile
-    // ------------------------------------------------------
     if (current_len >= (int)needle_len) {
         for (int i = 0; i <= current_len - (int)needle_len; i++) {
             if (memcmp(current_line + i, needle_buf, needle_len) == 0) {
@@ -249,9 +245,7 @@ bool contains_query_in_line_or_overlap(
         }
     }
 
-    // ------------------------------------------------------
-    // Fall B: Überlappung mit vorheriger Zeile (lookback + current)
-    // ------------------------------------------------------
+    // Check for matches that span the boundary between the lookback buffer and the current line.
     if (lookback_len > 0 && current_len > 0) {
         size_t combined_len = lookback_len + current_len;
         if (combined_len < needle_len) goto save_lookback;
@@ -285,10 +279,11 @@ bool contains_query_in_line_or_overlap(
         }
     }
 
+// Update the lookback buffer with the end of the current line for the next iteration. 
+// We keep up to MAX_LOOKBACK bytes from the end of the current line, which allows us to detect matches 
+// that span across lines without needing to re-read previous data from the file.
 save_lookback:;
-    // ------------------------------------------------------
-    // Lookback aktualisieren – bleibt gleich
-    // ------------------------------------------------------
+
     size_t keep = needle_len > 0 ? needle_len - 1 : 0;
 
     if (current_len >= (int)keep) {
@@ -307,11 +302,12 @@ save_lookback:;
     return false;
 }
 
+// Print the header with file information and magic byte detection results
 void print_header(options *option) {
 
     print_color(HEADER_COLOR, option->color);
-    if (option->pipeline) printf("Hexdump for <pipe>:\n\n");
-    else printf("\nHexdump for <%s>:\n\n", option->filename);
+    if (option->pipeline) printf("<pipe>:\n\n");
+    else printf("\n<%s>:\n\n", option->filename);
     print_color(RESET, option->color);
     
     // Prints spaces to align column headers with the hex data area.
@@ -339,6 +335,53 @@ void print_header(options *option) {
     //fputc('\n', stdout);
 }
 
+static int found_magic_arr [256] = {0}; // Array to track which magic signatures have been found, indexed by signature ID.
+
+// Scan the beginning of the file stream for known magic byte signatures and print any matches.
+void find_magic_bytes_in_stream_header(FILE *file, options *option) {
+    if (file == NULL) return;
+
+    // Get real file size once
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    if (file_size == 0) return;
+
+    // Read a chunk of the file into a buffer for signature scanning. We read a fixed size (e.g., 64KB) 
+    // which should cover all signatures up to the maximum offset we defined.
+    #define READ_PREFIX_SIZE 65536  
+    size_t to_read = (file_size < READ_PREFIX_SIZE) ? file_size : READ_PREFIX_SIZE;
+    unsigned char *buffer = malloc(to_read);
+    if (!buffer) {
+        perror("Malloc failed for file header");
+        exit(EXIT_FAILURE);
+    }
+
+    size_t bytes_read = fread(buffer, 1, to_read, file);
+
+    // Scan all known signatures
+    for (int sig_id = 0; sig_id < Magic_Signatures_Count; sig_id++) {
+        const MagicSignature *sig = &Magic_Signatures[sig_id];
+
+        // Skip if file too small or offset beyond what we read
+        if (sig->offset + sig->len > file_size ||
+            sig->offset + sig->len > bytes_read) {
+            continue;
+        }
+
+        // Compare directly in the buffer
+        if (memcmp(buffer + sig->offset, sig->bytes, sig->len) == 0) {
+            found_magic_arr[sig_id] = 1;   // ← use the global array!
+            print_color(MAGIC_COLOR, option->color);
+            printf("\n<-> Found %s at offset %d\n", sig->description, sig->offset);
+            print_color(RESET, option->color);
+        }
+    }
+
+    free(buffer);
+}
+
 // Main function to print the hex dump based on the provided options
 void print_hex(options *option){
     
@@ -355,13 +398,8 @@ void print_hex(options *option){
     
     // Apply starting addr
     addr_display += option->offset_read;
-
-    // Optional goto when raw
-    if (!option->raw && !option->skip_header) print_header(option);
-    if (!option->raw) fputc('\n', out);
-
-    FILE *file = NULL;
     
+    FILE *file = NULL;
     // checks if filename is empty, then use stdin as file
     if (!option->filename) {
         file = stdin;
@@ -375,6 +413,10 @@ void print_hex(options *option){
             exit(EXIT_FAILURE);
         }
     }
+
+    if (!option->skip_header) find_magic_bytes_in_stream_header(file, option);
+    if (!option->raw && !option->skip_header) print_header(option);
+    if (!option->raw) fputc('\n', out);
     
     static char line[4096];  // Buffer for each line
     int line_pos = 0;        // Line position

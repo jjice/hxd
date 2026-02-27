@@ -16,9 +16,9 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 
 ## 🛠 Features & Core Logic
 ### 🔍 Analysis
-- [ ] **Magic Bytes Recognition**
+- [x] **Magic Bytes Recognition**
   - [x] Implement `MagicTable` lookup logic.
-  - [ ] Output detected file format in the header.
+  - [x] Output detected file format in the header.
 
 - [ ] **Search function**
   
@@ -33,14 +33,14 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 - [ ] **Comparison Mode**: Side-by-side diffing of two binary files.
 - [ ] **Advanced Mode**: Octal, decimal, binary
 - [ ] **Reverse Mode**: Reverse hex to bin
-- [ ] **RAW Output-Mode**: Output in raw data 
+- [x] **RAW Output-Mode**: Output in raw data 
 ---
 
 ## 📦 Distribution & Releases
 - [ ] **Package Manager Integration**
   - [ ] Submit to AUR (Arch User Repository).
   - [ ] Add a binary .deb
-  - [ ] Scoop/Winget manifest for Windows.
+  - [ ] Winget manifest for Windows.
 
 ---
 
@@ -62,4 +62,4 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 - [x] Heatmap (fixed | adaptiv)
 
 ## 🐞 Bugs
-- [ ] hxed.exe test -l 100 -hm adaptiv : fixed adaptiv heatmap while limit is set
+- [ ] hxed.exe -f (file) -l 100 -hm adaptiv : fixed adaptiv heatmap while limit is set

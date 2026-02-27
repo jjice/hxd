@@ -37,7 +37,6 @@ static const uint8_t sig_0026[] = { 0x47, 0x49, 0x46, 0x38, 0x37, 0x61 };
 static const uint8_t sig_0027[] = { 0x42, 0x4D };
 static const uint8_t sig_0028[] = { 0x49, 0x49, 0x2A, 0x00 };
 static const uint8_t sig_0029[] = { 0x4D, 0x4D, 0x00, 0x2A };
-static const uint8_t sig_0030[] = { 0x52, 0x49, 0x46, 0x46 };
 static const uint8_t sig_0031[] = { 0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63 };
 static const uint8_t sig_0032[] = { 0x38, 0x42, 0x50, 0x53 };
 static const uint8_t sig_0033[] = { 0x67, 0x69, 0x6D, 0x70, 0x20, 0x78, 0x63, 0x66, 0x20, 0x76 };
@@ -52,14 +51,12 @@ static const uint8_t sig_0041[] = { 0xFF, 0xFB };
 static const uint8_t sig_0042[] = { 0x66, 0x4C, 0x61, 0x43 };
 static const uint8_t sig_0043[] = { 0x4F, 0x67, 0x67, 0x53 };
 static const uint8_t sig_0044[] = { 0x46, 0x4F, 0x52, 0x4D, 0x00 };
-static const uint8_t sig_0045[] = { 0x52, 0x49, 0x46, 0x46 };
 static const uint8_t sig_0046[] = { 0x4D, 0x54, 0x68, 0x64 };
 static const uint8_t sig_0047[] = { 0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11 };
 static const uint8_t sig_0048[] = { 0x2E, 0x73, 0x6E, 0x64 };
 static const uint8_t sig_0049[] = { 0x1A, 0x45, 0xDF, 0xA3 };
 static const uint8_t sig_0050[] = { 0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6F, 0x6D };
 static const uint8_t sig_0051[] = { 0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74, 0x20, 0x20 };
-static const uint8_t sig_0052[] = { 0x52, 0x49, 0x46, 0x46 };
 static const uint8_t sig_0053[] = { 0x46, 0x4C, 0x56, 0x01 };
 static const uint8_t sig_0054[] = { 0x00, 0x00, 0x01, 0xBA };
 static const uint8_t sig_0055[] = { 0x00, 0x00, 0x01, 0xB3 };
@@ -107,8 +104,38 @@ static const uint8_t sig_0096[] = { 0x7B, 0x22 };
 static const uint8_t sig_0097[] = { 0x5B, 0x22 };
 static const uint8_t sig_0098[] = { 0x3C, 0x21, 0x44, 0x4F, 0x43, 0x54, 0x59, 0x50, 0x45, 0x20, 0x68, 0x74, 0x6D, 0x6C };
 static const uint8_t sig_0099[] = { 0x49, 0x54, 0x53, 0x46 };
+static const uint8_t sig_0100[] = { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50 };
+static const uint8_t sig_0101[] = { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45 };
+static const uint8_t sig_0102[] = { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x41, 0x56, 0x49, 0x20 };
+static const uint8_t sig_0103[] = { 0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66 };
+static const uint8_t sig_0104[] = { 0x3C, 0x73, 0x76, 0x67 };
+static const uint8_t sig_0105[] = { 0x3C, 0x3F, 0x78, 0x6D, 0x6C, 0x20, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E };
+static const uint8_t sig_0106[] = { 0x50, 0x4B, 0x03, 0x04, 0x0A, 0x00, 0x00, 0x00 };
+static const uint8_t sig_0107[] = { 0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41, 0x20 };
+static const uint8_t sig_0108[] = { 0x00, 0x00, 0x00, 0x14, 0x66, 0x74, 0x79, 0x70, 0x33, 0x67, 0x70 };
+static const uint8_t sig_0109[] = { 0xFF, 0xF1 };
+static const uint8_t sig_0110[] = { 0xFF, 0xF9 };
+static const uint8_t sig_0111[] = { 0x4F, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64 };
+static const uint8_t sig_0112[] = { 0x44, 0x44, 0x53, 0x20 };
+static const uint8_t sig_0113[] = { 0x25, 0x21, 0x50, 0x53 };
+static const uint8_t sig_0114[] = { 0xC5, 0xD0, 0xD3, 0xC6 };
+static const uint8_t sig_0115[] = { 0x00, 0x00, 0x01, 0x00, 0x00 };
+static const uint8_t sig_0116[] = { 0x43, 0x72, 0x65, 0x61, 0x74, 0x69, 0x76, 0x65, 0x20, 0x56, 0x6F, 0x69, 0x63, 0x65 };
+static const uint8_t sig_0117[] = { 0x45, 0x78, 0x74, 0x65, 0x6E, 0x64, 0x65, 0x64, 0x20, 0x4D, 0x6F, 0x64, 0x75, 0x6C, 0x65 };
+static const uint8_t sig_0118[] = { 0x49, 0x4D, 0x50, 0x4D };
+static const uint8_t sig_0119[] = { 0x47, 0x49, 0x4D, 0x50, 0x20, 0x50, 0x41, 0x54 };
+static const uint8_t sig_0120[] = { 0x50, 0x41, 0x52, 0x31 };
+static const uint8_t sig_0121[] = { 0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E };
+static const uint8_t sig_0122[] = { 0x00, 0x00, 0x01, 0xB5 };
+static const uint8_t sig_0123[] = { 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32 };
+static const uint8_t sig_0124[] = { 0x3C, 0x68, 0x74, 0x6D, 0x6C };
+static const uint8_t sig_0125[] = { 0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A, 0x64, 0x65, 0x62, 0x69, 0x61, 0x6E };
+static const uint8_t sig_0127[] = { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x51, 0x4C, 0x43, 0x4D };
+static const uint8_t sig_0128[] = { 0x00, 0x00, 0x00, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A };
+static const uint8_t sig_0129[] = { 0x47 };
 
-const MagicSignature magic_signatures[] = {
+const MagicSignature Magic_Signatures[126] = {
+    // ===== OFFSET 0 =====
     { sig_0000, 2, 0, "exe, dll, sys, drv", "Windows PE Executable / DOS MZ executable" },  // 4D 5A  offset 0  exe, dll, sys, drv
     { sig_0001, 4, 0, "elf, bin, so, o", "Linux Executable and Linkable Format (ELF)" },  // 7F 45 4C 46  offset 0  elf, bin, so, o
     { sig_0002, 4, 0, "mach-o", "macOS Mach-O Executable (64-bit)" },  // CF FA ED FE  offset 0  mach-o
@@ -139,7 +166,7 @@ const MagicSignature magic_signatures[] = {
     { sig_0027, 2, 0, "bmp, dib", "Windows Bitmap" },  // 42 4D  offset 0  bmp, dib
     { sig_0028, 4, 0, "tif, tiff", "TIFF image (Little Endian)" },  // 49 49 2A 00  offset 0  tif, tiff
     { sig_0029, 4, 0, "tif, tiff", "TIFF image (Big Endian)" },  // 4D 4D 00 2A  offset 0  tif, tiff
-    { sig_0030, 4, 0, "webp", "WebP image (RIFF container)" },  // 52 49 46 46  offset 0  webp
+    { sig_0100, 12, 0, "webp", "WebP image (extended RIFF)" },  // 52 49 46 46 + WEBP  offset 0  webp
     { sig_0031, 12, 0, "heic", "High Efficiency Image File Format" },  // 00 00 00 18 66 74 79 70 68 65 69 63  offset 0  heic
     { sig_0032, 4, 0, "psd", "Adobe Photoshop Document" },  // 38 42 50 53  offset 0  psd
     { sig_0033, 10, 0, "xcf", "GIMP image project file" },  // 67 69 6D 70 20 78 63 66 20 76  offset 0  xcf
@@ -154,14 +181,14 @@ const MagicSignature magic_signatures[] = {
     { sig_0042, 4, 0, "flac", "Free Lossless Audio Codec" },  // 66 4C 61 43  offset 0  flac
     { sig_0043, 4, 0, "ogg, oga, ogv", "Ogg media container" },  // 4F 67 67 53  offset 0  ogg, oga, ogv
     { sig_0044, 5, 0, "aiff, aif", "Audio Interchange File Format" },  // 46 4F 52 4D 00  offset 0  aiff, aif
-    { sig_0045, 4, 0, "wav", "Waveform Audio File Format" },  // 52 49 46 46  offset 0  wav
+    { sig_0101, 12, 0, "wav", "Waveform Audio File Format (extended RIFF)" },  // 52 49 46 46 + WAVE  offset 0  wav
     { sig_0046, 4, 0, "mid, midi", "Standard MIDI file" },  // 4D 54 68 64  offset 0  mid, midi
     { sig_0047, 8, 0, "wma, wmv, asf", "Advanced Systems Format" },  // 30 26 B2 75 8E 66 CF 11  offset 0  wma, wmv, asf
     { sig_0048, 4, 0, "au, snd", "Sun/NeXT audio file" },  // 2E 73 6E 64  offset 0  au, snd
     { sig_0049, 4, 0, "mkv, webm", "Matroska / WebM container" },  // 1A 45 DF A3  offset 0  mkv, webm
     { sig_0050, 12, 0, "mp4", "MPEG-4 video (ISO Media)" },  // 00 00 00 18 66 74 79 70 69 73 6F 6D  offset 0  mp4
     { sig_0051, 12, 0, "mov", "QuickTime Movie" },  // 00 00 00 20 66 74 79 70 71 74 20 20  offset 0  mov
-    { sig_0052, 4, 0, "avi", "Audio Video Interleave (RIFF)" },  // 52 49 46 46  offset 0  avi
+    { sig_0102, 12, 0, "avi", "Audio Video Interleave (extended RIFF)" },  // 52 49 46 46 + AVI   offset 0  avi
     { sig_0053, 4, 0, "flv", "Flash Video file" },  // 46 4C 56 01  offset 0  flv
     { sig_0054, 4, 0, "mpg, mpeg, vob", "MPEG-2 Program Stream" },  // 00 00 01 BA  offset 0  mpg, mpeg, vob
     { sig_0055, 4, 0, "mpg, mpeg", "MPEG-1/2 Video Sequence" },  // 00 00 01 B3  offset 0  mpg, mpeg
@@ -173,7 +200,6 @@ const MagicSignature magic_signatures[] = {
     { sig_0061, 2, 0, "gz, tgz", "GZIP compressed file" },  // 1F 8B  offset 0  gz, tgz
     { sig_0062, 6, 0, "xz, txz", "XZ compression utility" },  // FD 37 7A 58 5A 00  offset 0  xz, txz
     { sig_0063, 3, 0, "bz2", "BZIP2 compressed file" },  // 42 5A 68  offset 0  bz2
-    { sig_0064, 5, 257, "tar", "POSIX tar archive" },  // 75 73 74 61 72  offset 257  tar
     { sig_0065, 2, 0, "z", "Unix compress LZW file" },  // 1F 9D  offset 0  z
     { sig_0066, 4, 0, "lz", "Lzip compressed file" },  // 4C 5A 49 50  offset 0  lz
     { sig_0067, 4, 0, "zst", "Zstandard (zstd) compressed file" },  // 28 B5 2F FD  offset 0  zst
@@ -181,7 +207,6 @@ const MagicSignature magic_signatures[] = {
     { sig_0069, 8, 0, "vmdk", "VMWare Virtual Disk" },  // 23 20 44 69 73 6B 20 44  offset 0  vmdk
     { sig_0070, 8, 0, "vhd", "Microsoft Virtual Hard Disk" },  // 43 4F 4E 45 43 54 49 58  offset 0  vhd
     { sig_0071, 4, 0, "qcow2", "QEMU Copy On Write v2" },  // 51 46 49 FB  offset 0  qcow2
-    { sig_0072, 5, 32769, "iso", "ISO-9660 CD-ROM Image" },  // 43 44 30 30 31  offset 32769  iso
     { sig_0073, 4, 0, "dmg", "Apple Disk Image (Trailer signature)" },  // 6B 6F 6C 79  offset 0  dmg
     { sig_0074, 1, 0, "bin", "Allgemeines x86 Boot-Image (JMP Instruk.)" },  // E9  offset 0  bin
     { sig_0075, 16, 0, "sqlite, db", "SQLite Database v3" },  // 53 51 4C 69 74 65 20 66 6F 72 6D 61 74 20 33 00  offset 0  sqlite, db
@@ -199,7 +224,6 @@ const MagicSignature magic_signatures[] = {
     { sig_0087, 2, 0, "ain", "AIN Compressed Archive" },  // 21 12  offset 0  ain
     { sig_0088, 4, 0, "idx", "AmiBack Amiga Backup index" },  // 49 4E 44 58  offset 0  idx
     { sig_0089, 8, 0, "jp2", "JPEG 2000 JP2 image" },  // 00 00 00 0C 6A 50 20 20  offset 0  jp2
-    { sig_0090, 8, 8, "dat", "Bitcoin Core wallet.dat" },  // 00 00 00 00 62 31 05 00  offset 8  dat
     { sig_0091, 8, 0, "dex", "Android Dalvik Executable" },  // 64 65 78 0a 30 33 35 00  offset 0  dex
     { sig_0092, 6, 0, "nsf", "Lotus Notes Database" },  // 1A 00 00 04 00 00  offset 0  nsf
     { sig_0093, 4, 0, "pcapng", "PCAP Next Generation Capture" },  // 0A 0D 0D 0A  offset 0  pcapng
@@ -208,8 +232,48 @@ const MagicSignature magic_signatures[] = {
     { sig_0096, 2, 0, "json", "JSON (beginnt mit '{')" },  // 7B 22  offset 0  json
     { sig_0097, 2, 0, "json", "JSON (beginnt mit '[')" },  // 5B 22  offset 0  json
     { sig_0098, 14, 0, "html", "HTML5 DTD" },  // 3C 21 44 4F 43 54 59 50 45 20 68 74 6D 6c  offset 0  html
+    { sig_0124, 5, 0, "html, htm", "HTML (beginnt mit <html)" },  // 3C 68 74 6D 6C  offset 0  html, htm
     { sig_0099, 4, 0, "chm", "Microsoft Compiled HTML Help" },  // 49 54 53 46  offset 0  chm
+    { sig_0103, 12, 0, "avif", "AV1 Image File Format" },  // 00 00 00 18 66 74 79 70 61 76 69 66  offset 0  avif
+    { sig_0104, 4, 0, "svg", "Scalable Vector Graphics" },  // 3C 73 76 67  offset 0  svg
+    { sig_0105, 13, 0, "xml", "XML with declaration" },  // 3C 3F 78 6D 6C 20 76 65 72 73 69 6F 6E  offset 0  xml
+    { sig_0106, 8, 0, "epub", "Electronic Publication (EPUB)" },  // 50 4B 03 04 0A 00 00 00  offset 0  epub
+    { sig_0107, 12, 0, "m4a, m4b, m4p", "MPEG-4 Audio" },  // 00 00 00 18 66 74 79 70 4D 34 41 20  offset 0  m4a, m4b, m4p
+    { sig_0108, 11, 0, "3gp, 3g2", "3GPP Mobile Video" },  // 00 00 00 14 66 74 79 70 33 67 70  offset 0  3gp, 3g2
+    { sig_0109, 2, 0, "aac", "Advanced Audio Coding (ADTS)" },  // FF F1  offset 0  aac
+    { sig_0110, 2, 0, "aac", "Advanced Audio Coding (ADTS, MPEG-2)" },  // FF F9  offset 0  aac
+    { sig_0111, 8, 0, "opus", "Opus Audio in Ogg container" },  // 4F 70 75 73 48 65 61 64  offset 0  opus
+    { sig_0112, 4, 0, "dds", "DirectDraw Surface texture" },  // 44 44 53 20  offset 0  dds
+    { sig_0113, 4, 0, "ps", "PostScript document" },  // 25 21 50 53  offset 0  ps
+    { sig_0114, 4, 0, "eps", "Encapsulated PostScript" },  // C5 D0 D3 C6  offset 0  eps
+    { sig_0115, 5, 0, "spl", "Windows Print Spool File" },  // 00 00 01 00 00  offset 0  spl
+    { sig_0118, 4, 0, "it", "Impulse Tracker Module" },  // 49 4D 50 4D  offset 0  it
+    { sig_0119, 8, 0, "pat", "GIMP Pattern file" },  // 47 49 4D 50 20 50 41 54  offset 0  pat
+    { sig_0120, 4, 0, "parquet", "Apache Parquet columnar storage" },  // 50 41 52 31  offset 0  parquet
+    { sig_0121, 7, 0, "pdf", "PDF with version number" },  // 25 50 44 46 2D 31 2E  offset 0  pdf
+    { sig_0122, 4, 0, "mpg, mpeg", "MPEG video extension start code" },  // 00 00 01 B5  offset 0  mpg, mpeg
+    { sig_0125, 14, 0, "deb", "Debian package (extended)" },  // 21 3C 61 72 63 68 3E 0A 64 65 62 69 61 6E  offset 0  deb
+    { sig_0127, 12, 0, "qcp", "Qualcomm PureVoice audio" },  // 52 49 46 46 + QLCM  offset 0  qcp
+    { sig_0128, 12, 0, "jp2, jpx", "JPEG 2000 codestream" },  // 00 00 00 0C 6A 50 20 20 0D 0A 87 0A  offset 0  jp2, jpx
+    { sig_0129, 1, 0, "ts, mts, m2ts", "MPEG Transport Stream" },  // 47  offset 0  ts, mts, m2ts
+    
+    // ===== OFFSET 4 =====
+    { sig_0123, 8, 4, "m4v", "MPEG-4 Video" },  // 66 74 79 70 6D 70 34 32  offset 4  m4v
+    
+    // ===== OFFSET 8 =====
+    { sig_0090, 8, 8, "dat", "Bitcoin Core wallet.dat" },  // 00 00 00 00 62 31 05 00  offset 8  dat
+    
+    // ===== OFFSET 19 =====
+    { sig_0116, 14, 19, "voc", "Creative Voice file" },  // 43 72 65 61 74 69 76 65 20 56 6F 69 63 65  offset 19  voc
+    
+    // ===== OFFSET 44 =====
+    { sig_0117, 15, 44, "xm", "Extended Module audio" },  // 45 78 74 65 6E 64 65 64 20 4D 6F 64 75 6C 65  offset 44  xm
+    
+    // ===== OFFSET 257 =====
+    { sig_0064, 5, 257, "tar", "POSIX tar archive" },  // 75 73 74 61 72  offset 257  tar
+    
+    // ===== OFFSET 32769 =====
+    { sig_0072, 5, 32769, "iso", "ISO-9660 CD-ROM Image" },  // 43 44 30 30 31  offset 32769  iso
 };
 
-const size_t magic_signatures_count = sizeof(magic_signatures) / sizeof(magic_signatures[0]);
-
+const int Magic_Signatures_Count = 126;
