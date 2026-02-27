@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="terminal" baseProfile="full" viewBox="0 0 703 251" width="703" version="1.1">
+    <defs>
+        <termtosvg:template_settings xmlns:termtosvg="https://github.com/nbedos/termtosvg">
+            <termtosvg:screen_geometry columns="82" rows="10"/>
+            <termtosvg:animation type="css"/>
+        </termtosvg:template_settings>
+        <style type="text/css" id="generated-style"><![CDATA[#screen {
+                font-family: 'DejaVu Sans Mono', monospace;
+                font-style: normal;
+                font-size: 14px;
+            }
+
+        text {
+            dominant-baseline: text-before-edge;
+            white-space: pre;
+        }
+    
+            :root {
+                --animation-duration: 1000ms;
+            }
+
+            @keyframes roll {
+                0.000%{transform:translateY(0px)}
+100.000%{transform:translateY(0px)}
+            }
+
+            #screen_view {
+                animation-duration: 1000ms;
+                animation-iteration-count:infinite;
+                animation-name:roll;
+                animation-timing-function: steps(1,end);
+                animation-fill-mode: forwards;
+            }
+        ]]></style>
+        <style type="text/css" id="user-style">
+            /* The colors defined below are the default 16 colors used for rendering text of the terminal. Adjust
+               them as needed.
+               gjm8 color theme (source: https://terminal.sexy/) */
+            .foreground {fill: #f8f8f2}
+            .background {fill: #272822}
+            .color0 {fill: #272822}
+            .color1 {fill: #f92672}
+            .color2 {fill: #a6e22e}
+            .color3 {fill: #f4bf75}
+            .color4 {fill: #66d9ef}
+            .color5 {fill: #ae81ff}
+            .color6 {fill: #a1efe4}
+            .color7 {fill: #f8f8f2}
+            .color8 {fill: #75715e}
+            .color9 {fill: #fd971f}
+            .color10 {fill: #383830}
+            .color11 {fill: #49483e}
+            .color12 {fill: #a59f85}
+            .color13 {fill: #f5f4f1}
+            .color14 {fill: #cc6633}
+            .color15 {fill: #f9f8f5}
+        </style>
+    </defs>
+    <rect id="terminalui" class="background" width="100%" height="100%" ry="4.5826941"/>
+    <circle cx="24" cy="23" r="7" class="color1"/>
+    <circle cx="44" cy="23" r="7" class="color3"/>
+    <circle cx="64" cy="23" r="7" class="color2"/>
+    <svg id="screen" width="656" height="170" x="23" y="50" viewBox="0 0 656 170" preserveAspectRatio="xMidYMin slice"><rect class="background" height="100%" width="100%" x="0" y="0"/><defs><g id="g1"><text x="0" textLength="88" class="foreground">00000000 | </text><text x="88" textLength="24" fill="#d7d7af">a5 </text><text x="112" textLength="48" class="color11">45 28 </text><text x="160" textLength="144" fill="#d7d7af">06 1b 98 da 1b b4 </text><text x="304" textLength="72" class="color11">6a 3e 7e </text><text x="376" textLength="96" fill="#d7d7af">01 eb b1 fb </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="8" fill="#d7d7af">.</text><text x="496" textLength="16" class="color11">E(</text><text x="512" textLength="48" fill="#d7d7af">......</text><text x="560" textLength="24" class="color11">j&gt;~</text><text x="584" textLength="32" fill="#d7d7af">....</text></g><g id="g2"><text x="0" textLength="88" class="foreground">00000010 | </text><text x="88" textLength="24" class="color11">29 </text><text x="112" textLength="48" fill="#d7d7af">b1 97 </text><text x="160" textLength="48" class="color11">6d 3c </text><text x="208" textLength="24" fill="#d7d7af">08 </text><text x="232" textLength="24" class="color11">39 </text><text x="256" textLength="96" fill="#d7d7af">bf 19 04 05 </text><text x="352" textLength="48" class="color11">45 7e </text><text x="400" textLength="48" fill="#d7d7af">06 1d </text><text x="448" textLength="24" class="color11">23 </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="8" class="color11">)</text><text x="496" textLength="16" fill="#d7d7af">..</text><text x="512" textLength="16" class="color11">m&lt;</text><text x="528" textLength="8" fill="#d7d7af">.</text><text x="536" textLength="8" class="color11">9</text><text x="544" textLength="32" fill="#d7d7af">....</text><text x="576" textLength="16" class="color11">E~</text><text x="592" textLength="16" fill="#d7d7af">..</text><text x="608" textLength="8" class="color11">#</text></g><g id="g3"><text x="0" textLength="88" class="foreground">00000020 | </text><text x="88" textLength="96" class="color11">4b 45 29 66 </text><text x="184" textLength="96" fill="#d7d7af">dd 03 81 92 </text><text x="280" textLength="24" class="color11">6d </text><text x="304" textLength="48" fill="#d7d7af">c0 10 </text><text x="352" textLength="24" class="color11">6f </text><text x="376" textLength="48" fill="#d7d7af">ab c1 </text><text x="424" textLength="24" class="color11">6a </text><text x="448" textLength="24" fill="#d7d7af">d4 </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="32" class="color11">KE)f</text><text x="520" textLength="32" fill="#d7d7af">....</text><text x="552" textLength="8" class="color11">m</text><text x="560" textLength="16" fill="#d7d7af">..</text><text x="576" textLength="8" class="color11">o</text><text x="584" textLength="16" fill="#d7d7af">..</text><text x="600" textLength="8" class="color11">j</text><text x="608" textLength="8" fill="#d7d7af">.</text></g><g id="g4"><text x="0" textLength="88" class="foreground">00000030 | </text><text x="88" textLength="24" class="color11">73 </text><text x="112" textLength="24" fill="#d7d7af">01 </text><text x="136" textLength="24" class="color11">42 </text><text x="160" textLength="48" fill="#d7d7af">af 0a </text><text x="208" textLength="72" class="color11">7b 6f 23 </text><text x="280" textLength="24" fill="#d7d7af">7f </text><text x="304" textLength="48" class="color11">74 68 </text><text x="352" textLength="24" fill="#d7d7af">fd </text><text x="376" textLength="24" class="color11">7a </text><text x="400" textLength="24" fill="#d7d7af">85 </text><text x="424" textLength="24" class="color11">20 </text><text x="448" textLength="24" fill="#d7d7af">c5 </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="8" class="color11">s</text><text x="496" textLength="8" fill="#d7d7af">.</text><text x="504" textLength="8" class="color11">B</text><text x="512" textLength="16" fill="#d7d7af">..</text><text x="528" textLength="24" class="color11">{o#</text><text x="552" textLength="8" fill="#d7d7af">.</text><text x="560" textLength="16" class="color11">th</text><text x="576" textLength="8" fill="#d7d7af">.</text><text x="584" textLength="8" class="color11">z</text><text x="592" textLength="8" fill="#d7d7af">.</text><text x="600" textLength="8" class="color11"> </text><text x="608" textLength="8" fill="#d7d7af">.</text></g><g id="g5"><text x="0" textLength="88" class="foreground">00000040 | </text><text x="88" textLength="24" fill="#d7d7af">ca </text><text x="112" textLength="48" class="color11">49 2b </text><text x="160" textLength="24" fill="#d7d7af">a8 </text><text x="184" textLength="24" class="color11">4d </text><text x="208" textLength="24" fill="#d7d7af">ad </text><text x="232" textLength="24" class="color11">3a </text><text x="256" textLength="24" fill="#d7d7af">ba </text><text x="280" textLength="72" class="color11">6d 4a 29 </text><text x="352" textLength="120" fill="#d7d7af">18 0c 94 ed 7f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="8" fill="#d7d7af">.</text><text x="496" textLength="16" class="color11">I+</text><text x="512" textLength="8" fill="#d7d7af">.</text><text x="520" textLength="8" class="color11">M</text><text x="528" textLength="8" fill="#d7d7af">.</text><text x="536" textLength="8" class="color11">:</text><text x="544" textLength="8" fill="#d7d7af">.</text><text x="552" textLength="24" class="color11">mJ)</text><text x="576" textLength="40" fill="#d7d7af">.....</text></g><g id="g6"><text x="0" textLength="88" class="foreground">00000050 | </text><text x="88" textLength="24" fill="#d7d7af">95 </text><text x="112" textLength="48" class="color11">2f 2e </text><text x="160" textLength="96" fill="#d7d7af">9f aa 9d c3 </text><text x="256" textLength="24" class="color11">29 </text><text x="280" textLength="24" fill="#d7d7af">11 </text><text x="304" textLength="48" class="color11">2b 26 </text><text x="352" textLength="48" fill="#d7d7af">8b b1 </text><text x="400" textLength="72" class="color11">46 50 7b </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="8" fill="#d7d7af">.</text><text x="496" textLength="16" class="color11">/.</text><text x="512" textLength="32" fill="#d7d7af">....</text><text x="544" textLength="8" class="color11">)</text><text x="552" textLength="8" fill="#d7d7af">.</text><text x="560" textLength="16" class="color11">+&amp;</text><text x="576" textLength="16" fill="#d7d7af">..</text><text x="592" textLength="24" class="color11">FP{</text></g><g id="g7"><text x="0" textLength="88" class="foreground">00000060 | </text><text x="88" textLength="24" fill="#d7d7af">8f </text><text x="112" textLength="48" class="color11">7c 23 </text><text x="160" textLength="24" fill="#d7d7af">dc </text><text x="184" textLength="48" class="color11">29 5d </text><text x="232" textLength="144" fill="#d7d7af">97 96 a8 c0 ae b4 </text><text x="376" textLength="24" class="color11">54 </text><text x="400" textLength="24" fill="#d7d7af">9b </text><text x="424" textLength="24" class="color11">33 </text><text x="448" textLength="24" fill="#d7d7af">ea </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="8" fill="#d7d7af">.</text><text x="496" textLength="16" class="color11">|#</text><text x="512" textLength="8" fill="#d7d7af">.</text><text x="520" textLength="16" class="color11">)]</text><text x="536" textLength="48" fill="#d7d7af">......</text><text x="584" textLength="8" class="color11">T</text><text x="592" textLength="8" fill="#d7d7af">.</text><text x="600" textLength="8" class="color11">3</text><text x="608" textLength="8" fill="#d7d7af">.</text></g><g id="g8"><text x="0" textLength="88" class="foreground">00000070 | </text><text x="88" textLength="24" fill="#d7d7af">ca </text><text x="112" textLength="24" class="color11">61 </text><text x="136" textLength="24" fill="#d7d7af">89 </text><text x="160" textLength="24" class="color11">74 </text><text x="184" textLength="24" fill="#d7d7af">ff </text><text x="208" textLength="24" class="color11">4c </text><text x="232" textLength="48" fill="#d7d7af">9d 10 </text><text x="280" textLength="24" class="color11">78 </text><text x="304" textLength="48" fill="#d7d7af">c3 9c </text><text x="352" textLength="24" class="color11">29 </text><text x="376" textLength="96" fill="#d7d7af">09 ec a4 99 </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="8" fill="#d7d7af">.</text><text x="496" textLength="8" class="color11">a</text><text x="504" textLength="8" fill="#d7d7af">.</text><text x="512" textLength="8" class="color11">t</text><text x="520" textLength="8" fill="#d7d7af">.</text><text x="528" textLength="8" class="color11">L</text><text x="536" textLength="16" fill="#d7d7af">..</text><text x="552" textLength="8" class="color11">x</text><text x="560" textLength="16" fill="#d7d7af">..</text><text x="576" textLength="8" class="color11">)</text><text x="584" textLength="32" fill="#d7d7af">....</text></g><g id="g9"><text x="0" textLength="8" class="background"> </text></g></defs><g id="screen_view"><g><use xlink:href="#g1" y="0"/><use xlink:href="#g2" y="17"/><use xlink:href="#g3" y="34"/><use xlink:href="#g4" y="51"/><use xlink:href="#g5" y="68"/><use xlink:href="#g6" y="85"/><use xlink:href="#g7" y="102"/><use xlink:href="#g8" y="119"/><rect x="0" y="153" width="8" height="17" class="foreground"/><use xlink:href="#g9" y="153"/></g></g></svg>
+</svg>

@@ -20,12 +20,12 @@ This document tracks the progress of **hxed**. Key focus areas include performan
   - [x] Implement `MagicTable` lookup logic.
   - [x] Output detected file format in the header.
 
-- [ ] **Search function**
+- [x] **Search function**
   
 - [x] **String Highlighting**
   - [x] CLI arguments and options added.
   - [x] Implement detection logic 
-  - [ ] More advanced detection
+  - [x] More advanced detection
 
 ### 🛠 Functionality
 - [ ] **Live-Preview (`--follow`)**: Monitor file changes in real-time.
@@ -45,12 +45,12 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 ---
 
 ## 🧪 Testing & Quality Assurance
-- [ ] **Automated Testing**
-  - [ ] Implement **Unit Tests** for core utility functions.
+- [x] **Automated Testing**
+  - [x] Implement **Unit Tests** for core utility functions.
   - [ ] Integrate **cppcheck** into CI pipeline for static analysis.
-- [ ] **Memory & Security**
-  - [ ] Run **Valgrind** to ensure zero memory leaks.
-  - [ ] Implement **Fuzzing** (using `AFL++` or `libFuzzer`) to harden the parser against corrupt binaries.
+- [x] **Memory & Security**
+  - [x] Run **Valgrind** to ensure zero memory leaks.
+  - [x] Implement **Fuzzing** (using `AFL++` or `libFuzzer`) to harden the parser against corrupt binaries.
 
 ---
 

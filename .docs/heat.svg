@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="terminal" baseProfile="full" viewBox="0 0 703 421" width="703" version="1.1">
+    <defs>
+        <termtosvg:template_settings xmlns:termtosvg="https://github.com/nbedos/termtosvg">
+            <termtosvg:screen_geometry columns="82" rows="20"/>
+            <termtosvg:animation type="css"/>
+        </termtosvg:template_settings>
+        <style type="text/css" id="generated-style"><![CDATA[#screen {
+                font-family: 'DejaVu Sans Mono', monospace;
+                font-style: normal;
+                font-size: 14px;
+            }
+
+        text {
+            dominant-baseline: text-before-edge;
+            white-space: pre;
+        }
+    
+            :root {
+                --animation-duration: 1000ms;
+            }
+
+            @keyframes roll {
+                0.000%{transform:translateY(0px)}
+100.000%{transform:translateY(0px)}
+            }
+
+            #screen_view {
+                animation-duration: 1000ms;
+                animation-iteration-count:infinite;
+                animation-name:roll;
+                animation-timing-function: steps(1,end);
+                animation-fill-mode: forwards;
+            }
+        ]]></style>
+        <style type="text/css" id="user-style">
+            /* The colors defined below are the default 16 colors used for rendering text of the terminal. Adjust
+               them as needed.
+               gjm8 color theme (source: https://terminal.sexy/) */
+            .foreground {fill: #f8f8f2}
+            .background {fill: #272822}
+            .color0 {fill: #272822}
+            .color1 {fill: #f92672}
+            .color2 {fill: #a6e22e}
+            .color3 {fill: #f4bf75}
+            .color4 {fill: #66d9ef}
+            .color5 {fill: #ae81ff}
+            .color6 {fill: #a1efe4}
+            .color7 {fill: #f8f8f2}
+            .color8 {fill: #75715e}
+            .color9 {fill: #fd971f}
+            .color10 {fill: #383830}
+            .color11 {fill: #49483e}
+            .color12 {fill: #a59f85}
+            .color13 {fill: #f5f4f1}
+            .color14 {fill: #cc6633}
+            .color15 {fill: #f9f8f5}
+        </style>
+    </defs>
+    <rect id="terminalui" class="background" width="100%" height="100%" ry="4.5826941"/>
+    <circle cx="24" cy="23" r="7" class="color1"/>
+    <circle cx="44" cy="23" r="7" class="color3"/>
+    <circle cx="64" cy="23" r="7" class="color2"/>
+    <svg id="screen" width="656" height="340" x="23" y="50" viewBox="0 0 656 340" preserveAspectRatio="xMidYMin slice"><rect class="background" height="100%" width="100%" x="0" y="0"/><defs><g id="g1"><text x="0" textLength="112" class="foreground">00000000 |    </text><text x="112" textLength="360" fill="#080808">01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f </text><text x="472" textLength="24" class="foreground">|  </text><text x="496" textLength="120" fill="#080808">...............</text></g><g id="g2"><text x="0" textLength="88" class="foreground">00000010 | </text><text x="88" textLength="384" fill="#262626">10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#262626">................</text></g><g id="g3"><text x="0" textLength="88" class="foreground">00000020 | </text><text x="88" textLength="384" fill="#00005f">20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#00005f"> !"#$%&amp;'()*+,-./</text></g><g id="g4"><text x="0" textLength="88" class="foreground">00000030 | </text><text x="88" textLength="384" fill="#0000af">30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#0000af">0123456789:;&lt;=&gt;?</text></g><g id="g5"><text x="0" textLength="88" class="foreground">00000040 | </text><text x="88" textLength="384" fill="#0000d7">40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#0000d7">@ABCDEFGHIJKLMNO</text></g><g id="g6"><text x="0" textLength="88" class="foreground">00000050 | </text><text x="88" textLength="384" fill="#005fd7">50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#005fd7">PQRSTUVWXYZ[\]^_</text></g><g id="g7"><text x="0" textLength="88" class="foreground">00000060 | </text><text x="88" textLength="384" fill="#0087d7">60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#0087d7">`abcdefghijklmno</text></g><g id="g8"><text x="0" textLength="88" class="foreground">00000070 | </text><text x="88" textLength="384" fill="#00d7d7">70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#00d7d7">pqrstuvwxyz{|}~.</text></g><g id="g9"><text x="0" textLength="88" class="foreground">00000080 | </text><text x="88" textLength="384" fill="#5fd700">80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#5fd700">................</text></g><g id="g10"><text x="0" textLength="88" class="foreground">00000090 | </text><text x="88" textLength="384" fill="#87d700">90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#87d700">................</text></g><g id="g11"><text x="0" textLength="88" class="foreground">000000A0 | </text><text x="88" textLength="384" fill="#d7ff00">a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 aa ab ac ad ae af </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#d7ff00">................</text></g><g id="g12"><text x="0" textLength="88" class="foreground">000000B0 | </text><text x="88" textLength="384" fill="#ffff00">b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#ffff00">................</text></g><g id="g13"><text x="0" textLength="88" class="foreground">000000C0 | </text><text x="88" textLength="384" fill="#ffd700">c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#ffd700">................</text></g><g id="g14"><text x="0" textLength="88" class="foreground">000000D0 | </text><text x="88" textLength="384" fill="#ffaf00">d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 da db dc dd de df </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#ffaf00">................</text></g><g id="g15"><text x="0" textLength="88" class="foreground">000000E0 | </text><text x="88" textLength="384" fill="#ff5f00">e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#ff5f00">................</text></g><g id="g16"><text x="0" textLength="88" class="foreground">000000F0 | </text><text x="88" textLength="384" fill="#ff0000">f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff </text><text x="472" textLength="16" class="foreground">| </text><text x="488" textLength="128" fill="#ff0000">................</text></g><g id="g17"><text x="0" textLength="8" class="background"> </text></g></defs><g id="screen_view"><g><use xlink:href="#g1" y="17"/><use xlink:href="#g2" y="34"/><use xlink:href="#g3" y="51"/><use xlink:href="#g4" y="68"/><use xlink:href="#g5" y="85"/><use xlink:href="#g6" y="102"/><use xlink:href="#g7" y="119"/><use xlink:href="#g8" y="136"/><use xlink:href="#g9" y="153"/><use xlink:href="#g10" y="170"/><use xlink:href="#g11" y="187"/><use xlink:href="#g12" y="204"/><use xlink:href="#g13" y="221"/><use xlink:href="#g14" y="238"/><use xlink:href="#g15" y="255"/><use xlink:href="#g16" y="272"/><rect x="0" y="306" width="8" height="17" class="foreground"/><use xlink:href="#g17" y="306"/></g></g></svg>
+</svg>
