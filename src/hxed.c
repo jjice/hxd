@@ -181,11 +181,7 @@ float calc_entropy (unsigned char *data, size_t len) {
 }
 
 // Check for search-signatures in the header of the file stream and print matches
-bool contains_query_in_line_or_overlap(
-    unsigned char *current_line, 
-    int current_len, 
-    options *option)
-{
+bool contains_query_in_line_or_overlap(unsigned char *current_line, int current_len, options *option) {
     // If no search query is set, we consider it a match (fail open).
         if (!option->search || option->search[0] == '\0') {
         return true;
