@@ -113,7 +113,8 @@ cat file.bin | hxed [options]
 | `-na, --no-ascii` | Hide ASCII column | — |
 | `-th, --toggle-header` | Show file info and magic byte detection | off |
 | `-o, --offset <num>` | Start reading at this byte offset | `0` |
-| `-l, --limit <num>` | Stop after this many bytes | EOF |
+| `-r, --read-size <num>` | Stop reading after this many bytes | `0` |
+| `-l, --limit <num\|hex>` | Stop after this bytes adress | EOF |
 | `-c, --color` | Enable syntax coloring | on |
 | `-nc, --no-color` | Disable syntax coloring | — |
 | `-s, --string` | Highlight embedded strings | off |
@@ -129,7 +130,7 @@ cat file.bin | hxed [options]
 | `-h, --help` | Show help and exit | — |
 
 **Notes:**
-- Boolean flags (`-a`, `-c`, `-s`, `-p`, `-e`) toggle their feature — no `on`/`off` value needed.
+- Boolean flags (`-a`, `-c`, `-s`, `-p`, `-e`) toggle their feature.
 - `--limit` must not be less than `--offset`.
 - Magic byte detection is disabled when `--offset` is set.
 - When reading from stdin, a filename is not required.
@@ -155,13 +156,13 @@ hxed -hm adaptiv image.png
 hxed -hm fixed -na sample.bin
 
 # Inspect a slice of a file (bytes 1024–2048)
-hxed -o 1024 -l 2048 sample.bin
+hxed -o 1k -l 2k sample.bin
 
 # String highlighting
 hxed -s image.png
 
 # Search for an ASCII pattern
-hxed -sa 'ABS' sample.bin
+hxed -sa 'ABC' sample.bin
 
 # Search for a hex pattern
 hxed -sh 'FF D8 FF' photo.jpg
