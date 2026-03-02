@@ -23,7 +23,8 @@ typedef struct {
     int heatmap;        // Enable and config heatmap view.
     bool ascii;         // Flag to determine if the ASCII representation column should be shown.
     size_t offset_read; // Bytes to skip until print
-    size_t limit_read;  // Count of bytes to be read/displayed
+    size_t limit_read;  // Byte to stop reading
+    size_t read_size;   // Bytes to read
     bool pipeline;      // Flag to determine if a pipeline is active (bypass check_file)
     bool color;         // Flag to determine if colored output is enabled
     bool string;        // Flag to determine if strings shoud be highlighted

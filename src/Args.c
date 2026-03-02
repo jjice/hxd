@@ -23,6 +23,34 @@
     #include <unistd.h>
 #endif
 
+// Get *endptr as suffix from strtol (fist char after number)
+size_t get_suffix(const char *endchar) {
+    if (*endchar == '\0') return 1;
+    
+    switch((unsigned char) *endchar) {
+        // K | k
+        case 75:
+        case 107:
+            return 1e3;
+            break;
+
+        // M
+        case 77:
+            return 1e6;
+            break;
+
+        // G
+        case 71:
+            return 1e9;
+            break;
+
+        // Found suffix not defined
+        default:
+            return -1;
+            break;
+    }
+}
+
 // Function to read a chunk of the file into the buffer, 
 // starting from read_start and respecting read_limit
 options *get_options(int argc, char *argv[]) {
@@ -40,6 +68,7 @@ options *get_options(int argc, char *argv[]) {
     option->ascii = true;
     option->offset_read = 0;
     option->limit_read = 0;
+    option->read_size = 0;
     option->pipeline = false;
     option->color = true;
     option->color = true;
@@ -70,7 +99,8 @@ options *get_options(int argc, char *argv[]) {
         "  -na, --no-ascii                           Hide ASCII representation column\n"
         "  -th, --toggle-header                      Show header with file info and magic byte detection\n"
         "  -o,  --offset          <num>              Start reading at this byte offset (default: 0)\n"
-        "  -l,  --limit           <num>              Stop after this many bytes (default: read to EOF)\n"
+        "  -l,  --limit           <num|hex>          Stop at specific byte (default: read to EOF)\n"
+        "  -r,  --read-size       <num>              Stop after this many bytes (defailt: read to EOF)\n"
         "  -c,  --color                              Enable syntax highlighting / colors (default: on)\n"
         "  -nc, --no-color                           Disable syntax highlighting / colors\n"
         "  -s,  --string                             Enable string highlighting (default: off)\n"
@@ -148,31 +178,31 @@ options *get_options(int argc, char *argv[]) {
         }
 
         else if (strcmp(argv[x], "-hm") == 0 || (strcmp(argv[x], "--heatmap") == 0)){
-            // ASCII flag toggle argument.
+            // Heatmap flag toggle argument.
             if (x + 1 >= argc) {
                 fprintf(stderr, "Error: Heatmap requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
             else{
-                // Check for "on"
+                // Check for next arg
                 if (strcmp("adaptiv", argv[x + 1]) == 0) {
                     option->heatmap = 1;
                     x++;
                 }
-                // Check for "off"
+                // Check for next arg
                 else if (strcmp("fixed", argv[x + 1]) == 0) {
                     option->heatmap = 2;
                     x++;
                 }
-                // Check for "off"
+                // Check for next arg
                 else if (strcmp("none", argv[x + 1]) == 0) {
                     option->heatmap = 0;
                     x++;
                 }
-                // Invalid value provided.
+                // Unrecognized value provided.
                 else {
-                    printf("Invalid argument for Heatmap <%s>\n", argv[x + 1]);
+                    printf("Unrecognized argument for Heatmap <%s>\n", argv[x + 1]);
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
@@ -201,16 +231,17 @@ options *get_options(int argc, char *argv[]) {
                 char *endptr;
                 long val = strtol(argv[x + 1], &endptr, 10);
 
-                // Check for existing argument
-                if (endptr == argv[x + 1]) {
-                    fprintf(stderr, "Error: offset requires a numeric value\n");
-                    printf("%s", help_short);
+                size_t suffix = get_suffix(endptr); 
+                val = suffix * val;
+
+                if (suffix <= 0) {
+                    fprintf(stderr, "Nonvalid Prefix\n");
                     exit(EXIT_FAILURE);
                 }
 
-                // Check for bad characters
-                if (*endptr != '\0' && !isspace((unsigned char)*endptr)) {
-                    fprintf(stderr, "Error: offset contains invalid characters\n");
+                // Check for existing argument
+                if (endptr == argv[x + 1]) {
+                    fprintf(stderr, "Error: offset requires a numeric value\n");
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
@@ -245,16 +276,17 @@ options *get_options(int argc, char *argv[]) {
                 char *endptr;
                 long val = strtol(argv[x + 1], &endptr, 10);
 
-                // Check for existing argument
-                if (endptr == argv[x + 1]) {
-                    fprintf(stderr, "Error: limit requires a numeric value\n");
-                    printf("%s", help_short);
+                size_t suffix = get_suffix(endptr); 
+                val = suffix * val;
+
+                if (suffix <= 0) {
+                    fprintf(stderr, "Nonvalid Prefix\n");
                     exit(EXIT_FAILURE);
                 }
 
-                // Check for bad characters
-                if (*endptr != '\0' && !isspace((unsigned char)*endptr)) {
-                    fprintf(stderr, "Error: limit contains invalid characters\n");
+                // Check for existing argument
+                if (endptr == argv[x + 1]) {
+                    fprintf(stderr, "Error: limit requires a numeric value\n");
                     printf("%s", help_short);
                     exit(EXIT_FAILURE);
                 }
@@ -276,8 +308,65 @@ options *get_options(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
 
+                if (option->read_size != 0) {
+                    printf("No valid operation: limit & read");
+                    exit(EXIT_FAILURE);
+                }
+
                 // Set offset
                 option->limit_read = (size_t)val;
+                x++; // Skip the argument value.
+            }
+            
+        }
+
+
+        else if (strcmp(argv[x], "-r") == 0 || (strcmp(argv[x], "--read-size") == 0)) {
+            // Readsize Flag
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: read requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            else {
+                errno = 0;
+                char *endptr;
+                long val = strtol(argv[x + 1], &endptr, 10);
+
+                size_t suffix = get_suffix(endptr); 
+                val = suffix * val;
+
+                if (suffix <= 0) {
+                    fprintf(stderr, "Nonvalid Prefix\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                // Check for existing argument
+                if (endptr == argv[x + 1]) {
+                    fprintf(stderr, "Error: read requires a numeric value\n");
+                    printf("%s", help_short);
+                    exit(EXIT_FAILURE);
+                }
+
+                // Check for overflow
+                if (errno == ERANGE) {
+                    fprintf(stderr, "Error: read is too large or too small\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                // Check for positiv value
+                if (val <= 0) {
+                    fprintf(stderr, "Error: read must be positive\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                if (option->limit_read != 0) {
+                    printf("No valid operation: limit & read");
+                    exit(EXIT_FAILURE);
+                }
+
+                // Set offset
+                option->read_size = (size_t)val;
                 x++; // Skip the argument value.
             }
             
@@ -433,4 +522,3 @@ options *get_options(int argc, char *argv[]) {
 
     return option;
 }
-

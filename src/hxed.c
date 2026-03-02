@@ -56,7 +56,9 @@ void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t 
     size_t current_pos = ftell(file);
 
     // Absolut limit to read
-    size_t end_limit = read_start + read_limit;
+    
+    //size_t end_limit = read_start + read_limit;
+    size_t end_limit = read_limit;
 
     // Remaining bytes to read
     size_t remaining = 0;
@@ -79,7 +81,7 @@ void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t 
     return;
 }
 
-// Check if file exists and is not empty, also checks if offset and limit are in range of filesize
+// Check if file exists and is not empty, also checks if offset, read and limit are in range of filesize
 void check_file(options *option) {
 
     FILE *fp = fopen(option->filename, "rb");
@@ -103,9 +105,16 @@ void check_file(options *option) {
             exit(EXIT_FAILURE);
         }
 
-        // Ceck if filesize is in range of offset till limit
-        if (file_size < option->offset_read + option->limit_read) {
-            printf("Filesize is out of range, check offset|limit");
+        // Ceck if filesize is in range of limit
+        if (file_size < option->limit_read) {
+            printf("Filesize is out of range, check limit | keep empty for EOF");
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+        
+        // Ceck if filesize is in range of offset + read_size
+        if (file_size <= option->offset_read + option->read_size) {
+            printf("Filesize is out of range, check offset|read");
             fclose(fp);
             exit(EXIT_FAILURE);
         }
@@ -438,8 +447,12 @@ void print_hex(options *option){
     
     // --- Hex Output Loop ---
     while (1) {
-        
-        read_stream_to_buffer(&bytes_read, file, option->offset_read, option->limit_read, buffer, false);
+        size_t limit = 0;
+
+        if (option->read_size != 0) limit = option->offset_read + option->read_size;
+        else if (option->limit_read != 0) limit = option->limit_read;
+
+        read_stream_to_buffer(&bytes_read, file, option->offset_read, limit, buffer, false);
         if (bytes_read == 0) break;
 
         int processed = 0;
