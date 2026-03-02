@@ -51,7 +51,7 @@
   <img alt="Heatmap output" src=".docs/heat.svg" style="background:transparent">
 </picture>
 
-### ASCII search &nbsp;·&nbsp; `hxed -sa 'ABS' <file>`
+### ASCII search &nbsp;·&nbsp; `hxed -sa 'ABC' <file>`
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".docs/search.svg">
