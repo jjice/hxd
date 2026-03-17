@@ -10,7 +10,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <ctype.h>
 #include "Args.h"
 #include "version.h"
 
@@ -44,9 +43,9 @@ size_t get_suffix(const char *endchar) {
             return 1e9;
             break;
 
-        // Found suffix not defined
+        // Found suffix but not defined
         default:
-            return -1;
+            return 1;
             break;
     }
 }
@@ -71,14 +70,13 @@ options *get_options(int argc, char *argv[]) {
     option->read_size = 0;
     option->pipeline = false;
     option->color = true;
-    option->color = true;
     option->pager = false;
     option->entropie = false;
     option->string = false;
     option->raw = false;
     option->search_ascii = false;
     option->search_hex = false;
-    option->skip_header = true;
+    option->skip_header = false;
     option->search = NULL;
 
     // Help message string.
@@ -95,20 +93,15 @@ options *get_options(int argc, char *argv[]) {
         "  -f,  --file            <filename>         Input file (optional if data comes from stdin)\n"
         "  -hm, --heatmap         <adaptiv|fixed>    Show Colors as Heatmap with 16 colors (default: none)\n"
         "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line)\n"
-        "  -a,  --ascii                              Show ASCII representation column (default: on)\n"
-        "  -na, --no-ascii                           Hide ASCII representation column\n"
-        "  -th, --toggle-header                      Show header with file info and magic byte detection\n"
+        "  -a,  --ascii                              Toggle ASCII representation column (default: on)\n"
+        "  -th, --toggle-header                      Toggle header, footer and magic byte detection (default: on)\n"
         "  -o,  --offset          <num>              Start reading at this byte offset (default: 0)\n"
         "  -l,  --limit           <num|hex>          Stop at specific byte (default: read to EOF)\n"
         "  -r,  --read-size       <num>              Stop after this many bytes (defailt: read to EOF)\n"
-        "  -c,  --color                              Enable syntax highlighting / colors (default: on)\n"
-        "  -nc, --no-color                           Disable syntax highlighting / colors\n"
-        "  -s,  --string                             Enable string highlighting (default: off)\n"
-        "  -ns, --no-string                          Disable string highlighting\n"
-        "  -p,  --pager                              Pipe output through pager (more/less) (default: off)\n"
-        "  -np, --no-pager                           Disable pager output\n"
-        "  -e,  --entropy                            Show entropy graph per line (default: off)\n"
-        "  -ne, --no-entropy                         Disable entropy graph\n"
+        "  -c,  --color                              Toggle syntax highlighting / colors (default: on)\n"
+        "  -s,  --string                             Toggle string highlighting (default: off)\n"
+        "  -p,  --pager                              Toggle pager output (default: off)\n"
+        "  -e,  --entropy                            Toggle entropy graph per line (default: off)\n"
         "  -sa, --search-ascii    '<ascii chars>'    Search for all lines with input str as ascii\n"
         "  -sh, --search-hex      '<hex chars>'      Search for all line with input str as hex\n"
         "  -ro, --raw                                Raw output to console | file (pipe)\n"
@@ -117,18 +110,18 @@ options *get_options(int argc, char *argv[]) {
         "\n"
         "Examples:\n"
         "  hxed image.png                     # normal file\n"
-        "  hxed -w 32 -na secret.bin          # 32 bytes/line, no ASCII\n"
-        "  hxed -nc file | less -R            # output without colors\n"
+        "  hxed -w 32 -a secret.bin           # 32 bytes/line, toggle ASCII off\n"
+        "  hxed -c file | less -R             # toggle colors off\n"
         "  echo 'Hello World' | hxed          # pipeline to hxed\n"
         "  hxed -w 0 -ro test > o.txt         # raw output without newlines into a file\n"
-        "  hxed -s -c data.bin                # with string highlighting and colors\n"
+        "  hxed -s data.bin                   # with string highlighting\n"
         "\n"
         "Notes:\n"
         "  * Offsets and limits must be positive integers.\n"
         "  * Magic byte detection is inactive if offset is set\n"
         "  * --offset and --limit cannot be combined in a way that limit < offset.\n"
         "  * When reading from stdin (pipe), filename is not required.\n"
-        "  * Boolean flags toggle their respective feature without needing on/off values.\n"
+        "  * Toggle flags flip the current default state.\n"
         "\n";
 
     char help_short[] = "See -h for more information\n";
@@ -137,6 +130,11 @@ options *get_options(int argc, char *argv[]) {
     for (int x = 1; x < argc; x++) {
         if (strcmp(argv[x], "-f") == 0 || (strcmp(argv[x], "--file") == 0)) {
             // Handles explicit filename flag.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: filename requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
             option->filename = argv[x + 1];
             x++; // Skip the argument value.
         }
@@ -210,13 +208,8 @@ options *get_options(int argc, char *argv[]) {
         }
 
         else if (strcmp(argv[x], "-a") == 0 || (strcmp(argv[x], "--ascii") == 0)){
-            // ASCII flag - enable ASCII column
-            option->ascii = true;
-        }
-
-        else if (strcmp(argv[x], "-na") == 0 || (strcmp(argv[x], "--no-ascii") == 0)){
-            // No ASCII flag - disable ASCII column
-            option->ascii = false;
+            // ASCII flag toggle.
+            option->ascii = !option->ascii;
         }
 
         else if (strcmp(argv[x], "-o") == 0 || (strcmp(argv[x], "--offset") == 0)) {
@@ -373,43 +366,23 @@ options *get_options(int argc, char *argv[]) {
         }
 
         else if (strcmp(argv[x], "-c") == 0 || (strcmp(argv[x], "--color") == 0)){
-            // Color flag - enable colors
-            option->color = true;
-        }
-
-        else if (strcmp(argv[x], "-nc") == 0 || (strcmp(argv[x], "--no-color") == 0)){
-            // No color flag - disable colors
-            option->color = false;
+            // Color flag toggle.
+            option->color = !option->color;
         }
 
         else if (strcmp(argv[x], "-s") == 0 || (strcmp(argv[x], "--string") == 0)){
-            // String flag - enable string highlighting
-            option->string = true;
-        }
-
-        else if (strcmp(argv[x], "-ns") == 0 || (strcmp(argv[x], "--no-string") == 0)){
-            // No string flag - disable string highlighting
-            option->string = false;
+            // String flag toggle.
+            option->string = !option->string;
         }
 
         else if (strcmp(argv[x], "-p") == 0 || (strcmp(argv[x], "--pager") == 0)) {
-            // Pager flag - enable pager
-            option->pager = true;
-        }
-
-        else if (strcmp(argv[x], "-np") == 0 || (strcmp(argv[x], "--no-pager") == 0)) {
-            // No pager flag - disable pager
-            option->pager = false;
+            // Pager flag toggle.
+            option->pager = !option->pager;
         }
 
         else if (strcmp(argv[x], "-e") == 0 || (strcmp(argv[x], "--entropy") == 0)){
-            // Entropy flag - enable entropy
-            option->entropie = true;
-        }
-
-        else if (strcmp(argv[x], "-ne") == 0 || (strcmp(argv[x], "--no-entropy") == 0)){
-            // No entropy flag - disable entropy
-            option->entropie = false;
+            // Entropy flag toggle.
+            option->entropie = !option->entropie;
         }
 
         else if (strcmp(argv[x], "-sa") == 0 || (strcmp(argv[x], "--search-ascii") == 0)){
@@ -483,8 +456,8 @@ options *get_options(int argc, char *argv[]) {
         }
 
         else if (strcmp(argv[x], "-th") == 0 || (strcmp(argv[x], "--toggle-header") == 0)) {
-            // Help flag.
-            option->skip_header = false;
+            // Header flag toggle.
+            option->skip_header = !option->skip_header;
         }
 
         else {

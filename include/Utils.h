@@ -9,42 +9,34 @@
 #define UTILS_H
 
 #include <stddef.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <time.h>
+
 #define RESET           "\x1b[0m"
 #define BOLD            "\x1b[1m"
 #define DIM             "\x1b[2m"
 
-#define NON_PRINT_COLOR "\x1b[38;5;187m"     // Grey / Bright Black 
-#define NULL_BYTE_COLOR "\x1b[38;5;8m"      // Standard Blau 
-#define ADDR_COLOR      "\x1b[38;5;214m"    // Bright Blue 
-//#define HEX_VAL_COLOR   "\x1b[38;5;95m"     // Bright White 
-#define ASCII_COLOR     "\x1b[38;5;11m"     // Cyan 
-#define HEADER_COLOR    "\x1b[38;5;222m"    // Bright Yellow 
-#define MAGIC_COLOR     "\x1b[38;5;202m"    // Orange Magic Byte Highlight
+// --- Old color set (fallback) ---
+// #define NON_PRINT_COLOR "\x1b[38;5;187m"   // Grey / Bright Black
+// #define NULL_BYTE_COLOR "\x1b[38;5;8m"     // Standard Blau
+// #define ADDR_COLOR      "\x1b[38;5;214m"   // Bright Blue
+// #define ASCII_COLOR     "\x1b[38;5;11m"    // Cyan
+// #define HEADER_COLOR    "\x1b[38;5;222m"   // Bright Yellow
+// #define MAGIC_COLOR     "\x1b[38;5;202m"   // Orange Magic Byte Highlight
 
-static const char *heatmap_colors[16] = {
-    "\x1b[38;5;232m",  // 0
-    "\x1b[38;5;235m",
-    "\x1b[38;5;17m",
-    "\x1b[38;5;19m",
-    "\x1b[38;5;20m",
-    "\x1b[38;5;26m",
-    "\x1b[38;5;32m",
-    "\x1b[38;5;44m",
-    "\x1b[38;5;76m",
-    "\x1b[38;5;112m",
-    "\x1b[38;5;190m",
-    "\x1b[38;5;226m",
-    "\x1b[38;5;220m",
-    "\x1b[38;5;214m",
-    "\x1b[38;5;202m",
-    "\x1b[38;5;196m"   // 15
-};
+// --- Modern neutral color set (dark + light terminal friendly) ---
+#define NON_PRINT_COLOR "\x1b[38;5;240m"     // Neutral gray for control bytes
+#define NULL_BYTE_COLOR "\x1b[38;5;246m"     // Soft gray for null bytes
+#define ADDR_COLOR      "\x1b[38;5;67m"      // Muted steel blue for addresses
+#define ASCII_COLOR     "\x1b[38;5;75m"      // Calm cyan-blue for printable chars
+#define HEADER_COLOR    "\x1b[38;5;110m"     // Soft teal for header / footer
+#define MAGIC_COLOR     "\x1b[38;5;179m"     // Warm amber for magic signatures
+#define BORDER_COLOR    "\x1b[38;5;109m"     // Subtle border / separator color
+
+extern const char *heatmap_colors[16];
 
 #define INDEX_MAP(value, min, max) (int) (((float)(value - min) / (float)(max - min)) * 15.0 + 0.5)
-
-#include <stdio.h>
-#include <stdbool.h>
-
 
 #ifdef _WIN32
     // Windows-specific definitions for popen and fileno
@@ -57,34 +49,20 @@ static const char *heatmap_colors[16] = {
     #endif
 #endif
 
-// Function prototypes
-static inline void print_color(const char* color_code, bool enable_color) {
-    
-    if (enable_color) {
-        printf("%s", color_code);
-    }
-}
+void print_color(const char *color_code, bool enable_color);
+FILE *open_pager(void);
+int is_space(size_t n, unsigned char *str);
 
-// Function to open a pager (like less or more) for output. 
-// Falls back to stdout if no pager is available.
-static inline FILE* open_pager(void) {
-    
-    FILE* pager = popen("less -R", "w");
-    if (pager) return pager;
+typedef struct {
+    bool exists;
+    bool has_created;
+    bool has_modified;
+    size_t file_size;
+    time_t created_at;
+    time_t modified_at;
+} file_metadata;
 
-    pager = popen("more", "w");
-    if (pager) return pager;
-
-    return stdout;
-}
-
-// Return 0 if a single char from a given string is not a space char ' ' 
-static inline int is_space(size_t n, unsigned char *str) {
-    unsigned char *end = str + n;
-    while (str < end) {
-        if (*str++ != 32) return 0;
-    }
-    return 1;
-}
+bool get_file_metadata(const char *filename, file_metadata *meta);
+void format_time_local(time_t value, char *buffer, size_t buffer_size);
 
 #endif

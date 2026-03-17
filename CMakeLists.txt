@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(hxed LANGUAGES C VERSION 1.2.0)
+project(hxed LANGUAGES C VERSION 1.3.1)
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
@@ -17,7 +17,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(hxed 
     src/hxed.c
     src/Args.c
+    src/Display.c
     src/MagicBytes.c
+    src/File.c
+    src/Utils.c
+    ${HEADERS}
 )
 
 # 2. HEADER PFADE
