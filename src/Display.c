@@ -489,6 +489,63 @@ static void append_hex_section(char *line, size_t *line_pos, display_state *stat
     }
 }
 
+static void append_octal_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
+    // OCTAL loop: Similar to the HEX loop but formats bytes in octal representation.
+    for (int i = 0; i < state->option->buff_size; i++) {
+        if (i < line_len) {
+            unsigned char b = buffer[processed + i];
+            const char *col = resolve_byte_color(&b, state);
+
+            if (state->option->raw) append_to_line(line, MAX_LINE_SIZE, line_pos, "%03o", b);
+            else if (state->option->string && b == 0) {
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+            } else {
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%03o ", col, b);
+            }
+        } else {
+            append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+        }
+    }
+}
+
+static void append_binary_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
+    // BINARY loop: Similar to the HEX loop but formats bytes in binary representation.
+    for (int i = 0; i < state->option->buff_size; i++) {
+        if (i < line_len) {
+            unsigned char b = buffer[processed + i];
+            const char *col = resolve_byte_color(&b, state);
+
+            if (state->option->raw) append_to_line(line, MAX_LINE_SIZE, line_pos, "%08b", b);
+            else if (state->option->string && b == 0) {
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "         ");
+            } else {
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%08b ", col, b);
+            }
+        } else {
+            append_to_line(line, MAX_LINE_SIZE, line_pos, "         ");
+        }
+    }
+}
+
+static void append_decimal_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
+    // DECIMAL loop: Similar to the HEX loop but formats bytes in decimal representation.
+    for (int i = 0; i < state->option->buff_size; i++) {
+        if (i < line_len) {
+            unsigned char b = buffer[processed + i];
+            const char *col = resolve_byte_color(&b, state);
+
+            if (state->option->raw) append_to_line(line, MAX_LINE_SIZE, line_pos, "%03u", b);
+            else if (state->option->string && b == 0) {
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+            } else {
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%03u ", col, b);
+            }
+        } else {
+            append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+        }
+    }
+}
+
 // Append the ASCII section of a line and return rendered chars.
 static int append_ascii_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
     int char_written = 0;
@@ -566,7 +623,7 @@ static void emit_line_or_cache(char *line, size_t line_pos, display_state *state
 // Build and emit one full output line.
 static void render_line(display_state *state, int processed, int line_len) {
     char line[MAX_LINE_SIZE] = {0}; // Buffer for each line
-    size_t line_pos = 0;            // Line position
+    size_t line_pos = 0;            // Line position (cursor for appending)
 
     append_line_prefix(line, &line_pos, state);
     append_hex_section(line, &line_pos, state, processed, line_len);
@@ -607,14 +664,19 @@ void print_hex(options *option) {
 
     // Calculates dynamic address width to keep header and rows aligned.
     size_t max_addr = option->offset_read;
+    
     if (option->read_size != 0) max_addr = option->offset_read + option->read_size;
     else if (option->limit_read != 0) max_addr = option->limit_read;
+    
     int needed_digits = hex_digits_size_t(max_addr);
     if (needed_digits > state.addr_width) state.addr_width = needed_digits;
 
     FILE *file = open_input_file(option);
 
+    // Search for magic byte signatures in the file header if not skipped
     if (!option->skip_header) find_magic_bytes_in_stream_header(file);
+    
+    // Print header if not in raw mode.
     if (!option->raw && !option->skip_header) print_header(out, option, state.addr_width);
 
     if (option->heatmap == 1) {

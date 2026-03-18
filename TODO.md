@@ -12,10 +12,16 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 
 ### 🛠 Functionality
 - [ ] **Live-Preview (`--follow`)**: Monitor file changes in real-time.
+				
+	inotify e.q. and byte highlighting of changed bytes -> 
+	buffer before compare with latest buffer -> only output changed lines.
+
 - [ ] **Comparison Mode**: Side-by-side diffing of two binary files.
 - [ ] **Advanced Mode**: Octal, decimal, binary
 - [ ] **Reverse Mode**: Reverse hex to bin
 - [ ] **Byte Grouping**: Setting for advanced bytegrouping `g`
+- [ ] **C-Style Array**: Export output as c-style array
+- [ ] **Auto skip**: Skip null lines
 ---
 
 ## 📦 Distribution & Releases
