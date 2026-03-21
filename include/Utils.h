@@ -33,6 +33,7 @@
 #define HEADER_COLOR    "\x1b[38;5;110m"     // Soft teal for header / footer
 #define MAGIC_COLOR     "\x1b[38;5;179m"     // Warm amber for magic signatures
 #define BORDER_COLOR    "\x1b[38;5;109m"     // Subtle border / separator color
+#define ANALYSIS_TEXT_COLOR      "\x1b[38;5;12m"      // Royal blue for general text
 
 extern const char *heatmap_colors[16];
 

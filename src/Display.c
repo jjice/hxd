@@ -5,6 +5,14 @@
  * See LICENSE file in the project root for full license information.
  */
 
+/* Implementation of the display functions for the hex dumper 
+ * How it works:
+ * - Reads the input file in chunks defined by buff_size.
+ * - For each chunk, it constructs a formatted line of output based on the selected output mode (hex, octal, binary, decimal).
+ * - Applies coloring based on heatmap, string, or color options.
+ * - At the end of the dump, it prints a footer with a summary of the analysis and metadata.
+ */
+
 #include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
@@ -33,16 +41,19 @@ static char prev_line[MAX_LINE_SIZE] = {0};
 static size_t prev_line_pos = 0;
 static bool have_prev = false;
 
+// display_state structure to keep track of the current state of the display settings and statistics.
 typedef struct {
     FILE *out;
     options *option;
     size_t addr_display;
     int addr_width;
+    int visible_columns;
     unsigned char _max;
     unsigned char _min;
     bool no_newline;
 } display_state;
 
+// dump_analysis structure to keep track of statistics during the dump process.
 typedef struct {
     size_t total_bytes;
     size_t zero_bytes;
@@ -50,26 +61,8 @@ typedef struct {
     int magic_count;
 } dump_analysis;
 
-// Return number of hex digits needed to represent a value.
-static int hex_digits_size_t(size_t value) {
-    int digits = 1;
-    while (value >= 16) {
-        value >>= 4;
-        digits++;
-    }
-    return digits;
-}
 
-// Calculate visible row width of one rendered data line.
-static int calc_row_width(const options *option, int addr_width) {
-    int width = addr_width + 3;          // "<addr> | "
-    width += option->buff_size * 3;      // "HH "
-    if (option->ascii) {
-        width += 2;                      // "| "
-        width += option->buff_size;      // ASCII chars
-    } else width-= 1; // Remove trailing space if no ASCII section
-    return width;
-}
+static void append_header_columns(char *line, size_t line_size, size_t *line_pos, const options *option, int column_count);
 
 // Append formatted content to a line buffer without writing out of bounds.
 static void append_to_line(char *line, size_t line_size, size_t *line_pos, const char *fmt, ...) {
@@ -226,37 +219,84 @@ save_lookback:
     return false;
 }
 
+// Minor Function: Check if a line consists only of spaces 
+// (used for search result filtering).
+static int _calc_visible_columns(const options *option) {
+    size_t visible = (size_t)option->buff_size;
+
+    if (option->read_size != 0 && option->read_size < visible) {
+        visible = option->read_size;
+    } else if (option->limit_read > option->offset_read) {
+        size_t remaining = option->limit_read - option->offset_read;
+        if (remaining < visible) visible = remaining;
+    }
+
+    return (int)visible;
+}
+
+// Minor Function: Char width for the selected output mode (hex, bin, oct, dec).
+static int _get_chars_per_byte(const options *option) {
+    switch (option->output_mode) {
+        case 1:
+            return 8;
+        case 2:
+        case 3:
+            return 3;
+        case 0:
+        default:
+            return 2;
+    }
+}
+
+// Calculate visible row width of one rendered data line. (HEADER | FOOTER)
+static int calc_row_width(const options *option, int addr_width, int column_count) {
+    int chars_per_byte = _get_chars_per_byte(option);
+    int grouping = option->grouping > 0 ? option->grouping : 1;
+    int group_gaps = 0;
+
+    if (column_count > 0 && grouping > 1) {
+        group_gaps = (column_count - 1) / grouping;
+    }
+
+    int width = addr_width + 3; // "<addr> | "
+    width += column_count * (chars_per_byte + 1);
+    width += group_gaps;
+    if (option->ascii) {
+        width += 2;                      // "| "
+        width += column_count;           // ASCII chars
+    } else width-= 1; // Remove trailing space if no ASCII section
+    return width;
+}
+
 // Print the header with file information and current dump settings.
 static void print_header(FILE *out, options *option, int addr_width) {
     const char *src = option->pipeline ? "<pipe>" : option->filename;
-    int row_width = calc_row_width(option, addr_width);
-    
-    // Maybe added later
-    //int border_width = row_width > title_len ? row_width : title_len; 
-    //int title_len = (int)strlen("dump for ") + (int)strlen(src);
+    int column_count = _calc_visible_columns(option);
+    int row_width = calc_row_width(option, addr_width, column_count);
+    char header_line[MAX_LINE_SIZE] = {0};
+    size_t header_pos = 0;
 
     if (option->color) fprintf(out, "%s", HEADER_COLOR);
     fprintf(out, "\ndump for %s:\n", src);
 
-    if (option->color) fprintf(out, "%s", HEADER_COLOR);
-    fprintf(out, "%-*s | ", addr_width, "offset");
+    append_to_line(header_line, sizeof(header_line), &header_pos, "%-*s | ", addr_width, "offset");
 
-    // Prints column headers (offsets within the line: 00, 01, 02 ...).
-    for (int i = 0; i < option->buff_size; i++) {
-        fprintf(out, "%02X ", i);
+    append_header_columns(header_line, sizeof(header_line), &header_pos, option, column_count);
+
+    if (option->ascii) {
+        append_to_line(header_line, sizeof(header_line), &header_pos, "| ascii");
+        while ((int)header_pos < row_width) {
+            append_to_line(header_line, sizeof(header_line), &header_pos, " ");
+        }
     }
-    if (option->ascii) fprintf(out, "| ascii");
+
+    if (option->color) fprintf(out, "%s", HEADER_COLOR);
+    fputs(header_line, out);
     if (option->color) fprintf(out, "%s", RESET);
     fputc('\n', out);
 
-    // Prints the horizontal separator line.
-    int ascii_sep_pos = addr_width + 3 + (option->buff_size * 3);
     if (option->color) fprintf(out, "%s", BORDER_COLOR);
-    for (int i = 0; i < row_width; i++) {
-        if (option->ascii == true && i == ascii_sep_pos) {
-            fputc('+', out);
-        } else fputc('-', out);
-    }
+    for (int i = 0; i < row_width; i++) fputc('-', out);
     if (option->color) fprintf(out, "%s", RESET);
     fputc('\n', out);
 }
@@ -294,7 +334,8 @@ static void append_magic_summary(char *buffer, size_t buffer_size, size_t *pos) 
 
 // Print compact footer with analysis and metadata.
 static void print_footer(FILE *out, options *option, int addr_width, dump_analysis *analysis) {
-    int row_width = calc_row_width(option, addr_width);
+    int column_count = _calc_visible_columns(option);
+    int row_width = calc_row_width(option, addr_width, column_count);
     file_metadata meta = {0};
     char created_at[32] = "n/a";
     char modified_at[32] = "n/a";
@@ -318,13 +359,19 @@ static void print_footer(FILE *out, options *option, int addr_width, dump_analys
 
     if (option->color) fprintf(out, "%s", BORDER_COLOR);
     for (int i = 0; i < row_width; i++) fputc('-', out);
+    
     if (option->color) fprintf(out, "%s", RESET);
     fputc('\n', out);
 
+    // Summary line with size, zero byte count, line count, and magic byte summary.
+
     if (option->color) fprintf(out, "%s", HEADER_COLOR);
     fprintf(out, "summary");
+    
     if (option->color) fprintf(out, "%s", RESET);
-    fprintf(out, "  | size %zu B | zero %zu (%.1f%%) | lines %zu | magic %d\n",
+    fprintf(out, "%s  |%s size %zu B ; zero %zu (%.1f%%) ; lines %zu ; magic %d\n",
+            option->color ? BORDER_COLOR : "",
+            option->color ? ANALYSIS_TEXT_COLOR : "",
             shown_size,
             analysis->zero_bytes,
             zero_pct,
@@ -334,14 +381,22 @@ static void print_footer(FILE *out, options *option, int addr_width, dump_analys
     if (!option->pipeline) {
         if (option->color) fprintf(out, "%s", HEADER_COLOR);
         fprintf(out, "time");
+        
         if (option->color) fprintf(out, "%s", RESET);
-        fprintf(out, "     | created %s | modified %s\n", created_at, modified_at);
+        fprintf(out, "%s     |%s created %s ; modified %s\n",
+            option->color ? BORDER_COLOR : "",
+            option->color ? ANALYSIS_TEXT_COLOR : "",
+            created_at, 
+            modified_at);
     }
 
     if (option->color) fprintf(out, "%s", HEADER_COLOR);
     fprintf(out, "view");
+    
     if (option->color) fprintf(out, "%s", RESET);
-    fprintf(out, "     | width %d | offset %zu | ",
+    fprintf(out, "%s     |%s width %d ; offset %zu ; ",
+            option->color ? BORDER_COLOR : "",
+            option->color ? ANALYSIS_TEXT_COLOR : "",
             option->buff_size,
             option->offset_read);
 
@@ -353,8 +408,12 @@ static void print_footer(FILE *out, options *option, int addr_width, dump_analys
     if (analysis->magic_count > 0) {
         if (option->color) fprintf(out, "%s", HEADER_COLOR);
         fprintf(out, "magic");
+        
         if (option->color) fprintf(out, "%s", RESET);
-        fprintf(out, "    | %s\n", magic_line);
+        fprintf(out, "%s    |%s %s\n", 
+            option->color ? BORDER_COLOR : "", 
+            option->color ? ANALYSIS_TEXT_COLOR : "",
+            magic_line);
     }
 }
 
@@ -461,9 +520,64 @@ static void append_line_prefix(char *line, size_t *line_pos, display_state *stat
     if (state->option->raw) {
         append_to_line(line, MAX_LINE_SIZE, line_pos, "");
     } else if (state->option->color) {
-        append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%0*zX%s | ", ADDR_COLOR, state->addr_width, state->addr_display, RESET);
+        append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%0*zX %s| %s", ADDR_COLOR, state->addr_width, state->addr_display, BORDER_COLOR, RESET);
     } else {
         append_to_line(line, MAX_LINE_SIZE, line_pos, "%0*zX | ", state->addr_width, state->addr_display);
+    }
+}
+
+static int get_render_column_count(const display_state *state) {
+    if (state->visible_columns > 0 && state->visible_columns < state->option->buff_size) {
+        return state->visible_columns;
+    }
+    return state->option->buff_size;
+}
+
+static void append_header_columns(char *line, size_t line_size, size_t *line_pos, const options *option, int column_count) {
+    int grouping = option->grouping > 0 ? option->grouping : 1;
+    int cell_width = _get_chars_per_byte(option);
+
+    for (int i = 0; i < column_count; i++) {
+        append_to_line(line, line_size, line_pos, "%02X", i);
+
+        if (cell_width > 2) {
+            append_to_line(line, line_size, line_pos, "%*s", cell_width - 2, "");
+        }
+
+        if (i == column_count - 1) {
+            if (option->ascii) {
+                append_to_line(line, line_size, line_pos, " ");
+            }
+            continue;
+        }
+
+        append_to_line(line, line_size, line_pos, " ");
+        if (grouping > 1 && (i + 1) % grouping == 0) {
+            append_to_line(line, line_size, line_pos, " ");
+        }
+    }
+}
+
+static void append_group_spacing(char *line, size_t *line_pos, const display_state *state, int i) {
+    int grouping = state->option->grouping > 0 ? state->option->grouping : 1;
+    int column_count = get_render_column_count(state);
+
+    if (i == column_count - 1) {
+        append_to_line(line, MAX_LINE_SIZE, line_pos, " ");
+        return;
+    }
+
+    append_to_line(line, MAX_LINE_SIZE, line_pos, " ");
+
+    if (grouping > 1 && (i + 1) % grouping == 0) {
+        append_to_line(line, MAX_LINE_SIZE, line_pos, " ");
+    }
+}
+
+static void append_blank_cell(char *line, size_t *line_pos, display_state *state, int i, int cell_width) {
+    append_to_line(line, MAX_LINE_SIZE, line_pos, "%*s", cell_width, "");
+    if (!state->option->raw) {
+        append_group_spacing(line, line_pos, state, i);
     }
 }
 
@@ -471,77 +585,92 @@ static void append_line_prefix(char *line, size_t *line_pos, display_state *stat
 static void append_hex_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
     // HEX loop: Iterates through each byte in the current line,
     // applying coloring based on heatmap, string, or color options.
-    for (int i = 0; i < state->option->buff_size; i++) {
+    int column_count = get_render_column_count(state);
+
+    for (int i = 0; i < column_count; i++) {
+
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
+            
             const char *col = resolve_byte_color(&b, state);
 
             // Prints the hex value of the byte with appropriate spacing.
             if (state->option->raw) append_to_line(line, MAX_LINE_SIZE, line_pos, "%02x", b);
             else if (state->option->string && b == 0) {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "   ");
+                append_blank_cell(line, line_pos, state, i, 2);
             } else {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%02x ", col, b);
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%02x", col, b);
+                append_group_spacing(line, line_pos, state, i);
             }
         } else {
-            append_to_line(line, MAX_LINE_SIZE, line_pos, "   ");
+            append_blank_cell(line, line_pos, state, i, 2);
         }
     }
 }
 
+
 static void append_octal_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
     // OCTAL loop: Similar to the HEX loop but formats bytes in octal representation.
-    for (int i = 0; i < state->option->buff_size; i++) {
+    int column_count = get_render_column_count(state);
+
+    for (int i = 0; i < column_count; i++) {
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
             const char *col = resolve_byte_color(&b, state);
 
             if (state->option->raw) append_to_line(line, MAX_LINE_SIZE, line_pos, "%03o", b);
             else if (state->option->string && b == 0) {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+                append_blank_cell(line, line_pos, state, i, 3);
             } else {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%03o ", col, b);
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%03o", col, b);
+                append_group_spacing(line, line_pos, state, i);
             }
         } else {
-            append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+            append_blank_cell(line, line_pos, state, i, 3);
         }
     }
 }
 
 static void append_binary_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
     // BINARY loop: Similar to the HEX loop but formats bytes in binary representation.
-    for (int i = 0; i < state->option->buff_size; i++) {
+    int column_count = get_render_column_count(state);
+
+    for (int i = 0; i < column_count; i++) {
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
             const char *col = resolve_byte_color(&b, state);
 
             if (state->option->raw) append_to_line(line, MAX_LINE_SIZE, line_pos, "%08b", b);
             else if (state->option->string && b == 0) {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "         ");
+                append_blank_cell(line, line_pos, state, i, 8);
             } else {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%08b ", col, b);
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%08b", col, b);
+                append_group_spacing(line, line_pos, state, i);
             }
         } else {
-            append_to_line(line, MAX_LINE_SIZE, line_pos, "         ");
+            append_blank_cell(line, line_pos, state, i, 8);
         }
     }
 }
 
 static void append_decimal_section(char *line, size_t *line_pos, display_state *state, int processed, int line_len) {
     // DECIMAL loop: Similar to the HEX loop but formats bytes in decimal representation.
-    for (int i = 0; i < state->option->buff_size; i++) {
+    int column_count = get_render_column_count(state);
+
+    for (int i = 0; i < column_count; i++) {
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
             const char *col = resolve_byte_color(&b, state);
 
             if (state->option->raw) append_to_line(line, MAX_LINE_SIZE, line_pos, "%03u", b);
             else if (state->option->string && b == 0) {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+                append_blank_cell(line, line_pos, state, i, 3);
             } else {
-                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%03u ", col, b);
+                append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%03u", col, b);
+                append_group_spacing(line, line_pos, state, i);
             }
         } else {
-            append_to_line(line, MAX_LINE_SIZE, line_pos, "    ");
+            append_blank_cell(line, line_pos, state, i, 3);
         }
     }
 }
@@ -590,7 +719,7 @@ static void append_entropy_bar(char *line, size_t *line_pos, display_state *stat
         int space_for_bar = 0;
 
         if (!option->ascii) space_for_bar = 1;
-        else space_for_bar = state->option->buff_size - char_written + 1;
+        else space_for_bar = get_render_column_count(state) - char_written + 1;
         
         append_to_line(line, MAX_LINE_SIZE, line_pos, "%s%*s%s", col, space_for_bar, "", bar);
     }
@@ -625,8 +754,34 @@ static void render_line(display_state *state, int processed, int line_len) {
     char line[MAX_LINE_SIZE] = {0}; // Buffer for each line
     size_t line_pos = 0;            // Line position (cursor for appending)
 
+    if (state->option->skip_zero) {
+        bool all_zero = true;
+        for (int i = 0; i < line_len; i++) {
+            if (buffer[processed + i] != 0) {
+                all_zero = false;
+                break;
+            }
+        }
+        if (all_zero) return;
+    }
+
     append_line_prefix(line, &line_pos, state);
-    append_hex_section(line, &line_pos, state, processed, line_len);
+
+    switch (state->option->output_mode) {
+        case 1:
+            append_binary_section(line, &line_pos, state, processed, line_len);
+            break;
+        case 2:
+            append_octal_section(line, &line_pos, state, processed, line_len);
+            break;
+        case 3:
+            append_decimal_section(line, &line_pos, state, processed, line_len);
+            break;
+        case 0:
+        default:
+            append_hex_section(line, &line_pos, state, processed, line_len);
+            break;
+    }
 
     int char_written = append_ascii_section(line, &line_pos, state, processed, line_len);
     append_entropy_bar(line, &line_pos, state, processed, line_len, char_written, state->option);
@@ -634,6 +789,16 @@ static void render_line(display_state *state, int processed, int line_len) {
     if (!state->no_newline) append_to_line(line, MAX_LINE_SIZE, &line_pos, "\x1b[0m\n");
 
     emit_line_or_cache(line, line_pos, state, processed, line_len);
+}
+
+// Minor Function: Return number of hex digits needed to represent a value.
+static int _hex_digits_size_t(size_t value) {
+    int digits = 1;
+    while (value >= 16) {
+        value >>= 4;
+        digits++;
+    }
+    return digits;
 }
 
 // Main function to print the hex dump based on the provided options
@@ -658,6 +823,7 @@ void print_hex(options *option) {
     state.option = option;
     state.addr_display = option->offset_read;
     state.addr_width = 8;
+    state.visible_columns = _calc_visible_columns(option);
     state._max = 255;
     state._min = 0;
     state.no_newline = false;
@@ -668,7 +834,7 @@ void print_hex(options *option) {
     if (option->read_size != 0) max_addr = option->offset_read + option->read_size;
     else if (option->limit_read != 0) max_addr = option->limit_read;
     
-    int needed_digits = hex_digits_size_t(max_addr);
+    int needed_digits = _hex_digits_size_t(max_addr);
     if (needed_digits > state.addr_width) state.addr_width = needed_digits;
 
     FILE *file = open_input_file(option);
@@ -725,7 +891,6 @@ void print_hex(options *option) {
         }
     }
 
-    fprintf(out, "\n");
     if (!option->raw && !option->skip_header) print_footer(out, option, state.addr_width, &analysis);
     if (!option->raw && !option->skip_header) fprintf(out, "\n");
 

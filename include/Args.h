@@ -18,23 +18,26 @@
 
 // options (no getopt)
 typedef struct {
-    char *filename;     // Path to the file to be read.
-    int buff_size;      // The size of the buffer/line to display (e.g., 16 bytes).
-    int heatmap;        // Enable and config heatmap view.
-    bool ascii;         // Flag to determine if the ASCII representation column should be shown.
-    size_t offset_read; // Bytes to skip until print
-    size_t limit_read;  // Byte to stop reading
-    size_t read_size;   // Bytes to read
-    bool pipeline;      // Flag to determine if a pipeline is active (bypass check_file)
-    bool color;         // Flag to determine if colored output is enabled
-    bool string;        // Flag to determine if strings shoud be highlighted
-    bool pager;         // Flag to determine if output should be sent to a pager (e.g., less)
-    bool entropie;      // Future options: -e, --entropy to show entropy graph per line
-    bool raw;           // Flag to determine if output should be raw
-    bool search_ascii;  // Flag to determine if search for ascii string is active
-    bool search_hex;    // Flag to determine if search for hex string is active      
-    bool skip_header;   // Flag to determine if header will be skipped
+    char *filename;        // Path to the file to be read.
+    bool pipeline;         // Flag to determine if a pipeline is active (bypass check_file)
+    int output_mode;       // 0 = hex, 1 = binary, 2 = octal, 3 = decimal
+    int heatmap;           // Enable and config heatmap view.
+    int buff_size;         // The size of the buffer/line to display (e.g., 16 bytes).
+    int grouping;          // Grouping size for hex output (e.g., 1 for 1 bytes grouped together). Default is 1.
+    bool ascii;            // Flag to determine if the ASCII representation column should be shown.
+    bool color;            // Flag to determine if colored output is enabled
+    bool string;           // Flag to determine if strings shoud be highlighted
+    bool entropie;         // Future options: -e, --entropy to show entropy graph per line
+    bool skip_header;      // Flag to determine if header will be skipped
+    bool skip_zero;        // Flag to determine if lines with only zero bytes should be skipped
+    size_t offset_read;    // Bytes to skip until print
+    size_t limit_read;     // Byte to stop reading
+    size_t read_size;      // Bytes to read
+    bool search_ascii;     // Flag to determine if search for ascii string is active
+    bool search_hex;       // Flag to determine if search for hex string is active
     unsigned char *search; // Pointer to the search string (either ASCII or hex, depending on flags)
+    bool pager;            // Flag to determine if output should be sent to a pager (e.g., less)
+    bool raw;              // Flag to determine if output should be raw
 } options;
 
 options *get_options(int argc, char *argv[]);

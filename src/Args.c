@@ -62,22 +62,25 @@ options *get_options(int argc, char *argv[]) {
 
     // Set default values.
     option->filename = NULL;
+    option->pipeline = false;
+    option->output_mode = 0;
     option->heatmap = 0;
     option->buff_size = 16;
+    option->grouping = 1;
     option->ascii = true;
+    option->color = true;
+    option->string = false;
+    option->entropie = false;
+    option->skip_header = false;
+    option->skip_zero = false;
     option->offset_read = 0;
     option->limit_read = 0;
     option->read_size = 0;
-    option->pipeline = false;
-    option->color = true;
-    option->pager = false;
-    option->entropie = false;
-    option->string = false;
-    option->raw = false;
     option->search_ascii = false;
     option->search_hex = false;
-    option->skip_header = false;
     option->search = NULL;
+    option->pager = false;
+    option->raw = false;
 
     // Help message string.
     static const char *help =
@@ -89,22 +92,35 @@ options *get_options(int argc, char *argv[]) {
         "  hxed [options] [filename]\n"
         "  cat file.bin | hxed [options]\n"
         "\n"
-        "Options:\n"
+        "Input:\n"
         "  -f,  --file            <filename>         Input file (optional if data comes from stdin)\n"
-        "  -hm, --heatmap         <adaptiv|fixed>    Show Colors as Heatmap with 16 colors (default: none)\n"
+        "\n"
+        "Display:\n"
+        "  -m,  --mode            <num|'name'>       Output mode (0 = hex, 1 = bin, 2 = oct, 3 = dec) (default: 0|hex)\n"
+        "  -hm, --heatmap         <adaptiv|fixed>    Show colors as heatmap with 16 colors (default: none)\n"
         "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line)\n"
+        "  -g,  --grouping        <num>              Grouping size (bytes) for output (default: 1)\n"
         "  -a,  --ascii                              Toggle ASCII representation column (default: on)\n"
-        "  -th, --toggle-header                      Toggle header, footer and magic byte detection (default: on)\n"
-        "  -o,  --offset          <num>              Start reading at this byte offset (default: 0)\n"
-        "  -l,  --limit           <num|hex>          Stop at specific byte (default: read to EOF)\n"
-        "  -r,  --read-size       <num>              Stop after this many bytes (defailt: read to EOF)\n"
         "  -c,  --color                              Toggle syntax highlighting / colors (default: on)\n"
         "  -s,  --string                             Toggle string highlighting (default: off)\n"
-        "  -p,  --pager                              Toggle pager output (default: off)\n"
         "  -e,  --entropy                            Toggle entropy graph per line (default: off)\n"
+        "  -th, --toggle-header                      Toggle header, footer and magic byte detection (default: on)\n"
+        "  -sz, --skip-zero                          Toggle skip-zero lines (default: off)\n"
+        "\n"
+        "Read Range:\n"
+        "  -o,  --offset          <num>              Start reading at this byte offset (default: 0)\n"
+        "  -l,  --limit           <num|hex>          Stop at specific byte (default: read to EOF)\n"
+        "  -r,  --read-size       <num>              Stop after this many bytes (default: read to EOF)\n"
+        "\n"
+        "Search:\n"
         "  -sa, --search-ascii    '<ascii chars>'    Search for all lines with input str as ascii\n"
-        "  -sh, --search-hex      '<hex chars>'      Search for all line with input str as hex\n"
+        "  -sh, --search-hex      '<hex chars>'      Search for all lines with input str as hex\n"
+        "\n"
+        "Output:\n"
+        "  -p,  --pager                              Toggle pager output (default: off)\n"
         "  -ro, --raw                                Raw output to console | file (pipe)\n"
+        "\n"
+        "Info:\n"
         "  -h,  --help                               Show this help message and exit\n"
         "  -v,  --version                            Show version information and exit\n"
         "\n"
@@ -143,40 +159,46 @@ options *get_options(int argc, char *argv[]) {
             // Handles positional filename argument (argument not starting with '-').
             option->filename = argv[x];
         }
-        
-        else if (strcmp(argv[x], "-w") == 0 || (strcmp(argv[x], "--width") == 0)) {
-            // Buffer size argument parsing.
+
+        else if (strcmp(argv[x], "-m") == 0 || (strcmp(argv[x], "--mode") == 0)){
+            // Output mode argument.
             if (x + 1 >= argc) {
-                fprintf(stderr, "Error: width requires an argument\n");
+                fprintf(stderr, "Error: Output mode requires an argument\n");
                 printf("%s", help_short);
                 exit(EXIT_FAILURE);
             }
-
-            // Robust conversion using strtol for numeric input validation.
-            errno = 0;
-            char *endptr;
-            long val = strtol(argv[x + 1], &endptr, 10);
-
-            if (endptr == argv[x + 1]) {
-                fprintf(stderr, "Error: width requires a numeric value\n");
-                printf("%s", help_short);
-                exit(EXIT_FAILURE);
+            else{
+                // Check for next arg
+                if (strcmp("0", argv[x + 1]) == 0 || strcmp("hex", argv[x + 1]) == 0) {
+                    option->output_mode = 0;
+                    x++;
+                }
+                // Check for next arg
+                else if (strcmp("1", argv[x + 1]) == 0 || strcmp("bin", argv[x + 1]) == 0) {
+                    option->output_mode = 1;
+                    x++;
+                }
+                // Check for next arg
+                else if (strcmp("2", argv[x + 1]) == 0 || strcmp("oct", argv[x + 1]) == 0) {
+                    option->output_mode = 2;
+                    x++;
+                }
+                // Check for next arg
+                else if (strcmp("3", argv[x + 1]) == 0 || strcmp("dec", argv[x + 1]) == 0) {
+                    option->output_mode = 3;
+                    x++;
+                }
+                // Unrecognized value provided.
+                else {
+                    printf("Unrecognized argument for Output mode <%s>\n", argv[x + 1]);
+                    printf("%s", help_short);
+                    exit(EXIT_FAILURE);
+                }
             }
-            if (errno == ERANGE || val < 0) {
-                fprintf(stderr, "Error: width out of range\n"); // Includes check for negative/zero.
-                exit(EXIT_FAILURE);
-            }
-            if (val > 512) {
-                fprintf(stderr, "Error: width out of range [max. 512]\n"); // Includes check for negative/zero.
-                exit(EXIT_FAILURE);
-            }
-
-            option->buff_size = (int)val;
-            x++; // Skip the argument value.
         }
 
         else if (strcmp(argv[x], "-hm") == 0 || (strcmp(argv[x], "--heatmap") == 0)){
-            // Heatmap flag toggle argument.
+            // Heatmap argument.
             if (x + 1 >= argc) {
                 fprintf(stderr, "Error: Heatmap requires an argument\n");
                 printf("%s", help_short);
@@ -207,9 +229,95 @@ options *get_options(int argc, char *argv[]) {
             }
         }
 
+        else if (strcmp(argv[x], "-w") == 0 || (strcmp(argv[x], "--width") == 0)) {
+            // Buffer size argument parsing.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: width requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+
+            // Robust conversion using strtol for numeric input validation.
+            errno = 0;
+            char *endptr;
+            long val = strtol(argv[x + 1], &endptr, 10);
+
+            if (endptr == argv[x + 1]) {
+                fprintf(stderr, "Error: width requires a numeric value\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            if (errno == ERANGE || val < 0) {
+                fprintf(stderr, "Error: width out of range\n");
+                exit(EXIT_FAILURE);
+            }
+            if (val > 128) {
+                fprintf(stderr, "Error: width out of range [max. 128]\n");
+                exit(EXIT_FAILURE);
+            }
+
+            option->buff_size = (int)val;
+            x++;
+        }
+
+        else if (strcmp(argv[x], "-g") == 0 || (strcmp(argv[x], "--grouping") == 0)) {
+            // Grouping argument parsing.
+            if (x + 1 >= argc) {
+                fprintf(stderr, "Error: grouping requires an argument\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+
+            errno = 0;
+            char *endptr;
+            long val = strtol(argv[x + 1], &endptr, 10);
+
+            if (endptr == argv[x + 1]) {
+                fprintf(stderr, "Error: grouping requires a numeric value\n");
+                printf("%s", help_short);
+                exit(EXIT_FAILURE);
+            }
+            if (errno == ERANGE || val < 0) {
+                fprintf(stderr, "Error: grouping out of range\n");
+                exit(EXIT_FAILURE);
+            }
+            if (val > 128) {
+                fprintf(stderr, "Error: grouping out of range [max. 128]\n");
+                exit(EXIT_FAILURE);
+            }
+
+            option->grouping = (int)val;
+            x++;
+        }
+
         else if (strcmp(argv[x], "-a") == 0 || (strcmp(argv[x], "--ascii") == 0)){
             // ASCII flag toggle.
             option->ascii = !option->ascii;
+        }
+
+        else if (strcmp(argv[x], "-c") == 0 || (strcmp(argv[x], "--color") == 0)){
+            // Color flag toggle.
+            option->color = !option->color;
+        }
+
+        else if (strcmp(argv[x], "-s") == 0 || (strcmp(argv[x], "--string") == 0)){
+            // String flag toggle.
+            option->string = !option->string;
+        }
+
+        else if (strcmp(argv[x], "-e") == 0 || (strcmp(argv[x], "--entropy") == 0)){
+            // Entropy flag toggle.
+            option->entropie = !option->entropie;
+        }
+
+        else if (strcmp(argv[x], "-th") == 0 || (strcmp(argv[x], "--toggle-header") == 0)) {
+            // Header flag toggle.
+            option->skip_header = !option->skip_header;
+        }
+
+        else if (strcmp(argv[x], "-sz") == 0 || (strcmp(argv[x], "--size") == 0)) {
+            // Size flag toggle.
+            option->skip_zero = !option->skip_zero;
         }
 
         else if (strcmp(argv[x], "-o") == 0 || (strcmp(argv[x], "--offset") == 0)) {
@@ -365,26 +473,6 @@ options *get_options(int argc, char *argv[]) {
             
         }
 
-        else if (strcmp(argv[x], "-c") == 0 || (strcmp(argv[x], "--color") == 0)){
-            // Color flag toggle.
-            option->color = !option->color;
-        }
-
-        else if (strcmp(argv[x], "-s") == 0 || (strcmp(argv[x], "--string") == 0)){
-            // String flag toggle.
-            option->string = !option->string;
-        }
-
-        else if (strcmp(argv[x], "-p") == 0 || (strcmp(argv[x], "--pager") == 0)) {
-            // Pager flag toggle.
-            option->pager = !option->pager;
-        }
-
-        else if (strcmp(argv[x], "-e") == 0 || (strcmp(argv[x], "--entropy") == 0)){
-            // Entropy flag toggle.
-            option->entropie = !option->entropie;
-        }
-
         else if (strcmp(argv[x], "-sa") == 0 || (strcmp(argv[x], "--search-ascii") == 0)){
             // Search quarry argument.
             if (x + 1 >= argc) {
@@ -443,6 +531,11 @@ options *get_options(int argc, char *argv[]) {
             option->raw = true;
         }
 
+        else if (strcmp(argv[x], "-p") == 0 || (strcmp(argv[x], "--pager") == 0)) {
+            // Pager flag toggle.
+            option->pager = !option->pager;
+        }
+
         else if (strcmp(argv[x], "-h") == 0 || (strcmp(argv[x], "--help") == 0)) {
             // Help flag.
             printf("%s", help);
@@ -453,11 +546,6 @@ options *get_options(int argc, char *argv[]) {
             // Help flag.
             printf("%s", HXED_VERSION);
             exit(EXIT_SUCCESS);
-        }
-
-        else if (strcmp(argv[x], "-th") == 0 || (strcmp(argv[x], "--toggle-header") == 0)) {
-            // Header flag toggle.
-            option->skip_header = !option->skip_header;
         }
 
         else {
@@ -491,6 +579,11 @@ options *get_options(int argc, char *argv[]) {
         option->color = false;
         option->ascii = false;
         option->heatmap = false;
+    }
+
+    if (!option->color) {
+        option->heatmap = false;
+        option->string = false;
     }
 
     return option;
