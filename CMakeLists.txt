@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(hxed LANGUAGES C VERSION 1.3.2)
+project(hxed LANGUAGES C VERSION 1.3.3)
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
@@ -18,6 +18,7 @@ add_executable(hxed
     src/hxed.c
     src/Args.c
     src/Display.c
+    src/DisplayUtils.c
     src/MagicBytes.c
     src/File.c
     src/Utils.c
