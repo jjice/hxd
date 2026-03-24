@@ -26,14 +26,17 @@
 // #define MAGIC_COLOR     "\x1b[38;5;202m"   // Orange Magic Byte Highlight
 
 // --- Modern neutral color set (dark + light terminal friendly) ---
-#define NON_PRINT_COLOR "\x1b[38;5;240m"     // Neutral gray for control bytes
-#define NULL_BYTE_COLOR "\x1b[38;5;246m"     // Soft gray for null bytes
+#define NON_PRINT_COLOR "\x1b[38;5;153m"     // Neutral gray for control bytes
+#define NULL_BYTE_COLOR "\x1b[38;5;240m"     // Soft gray for null bytes
 #define ADDR_COLOR      "\x1b[38;5;67m"      // Muted steel blue for addresses
 #define ASCII_COLOR     "\x1b[38;5;75m"      // Calm cyan-blue for printable chars
 #define HEADER_COLOR    "\x1b[38;5;110m"     // Soft teal for header / footer
 #define MAGIC_COLOR     "\x1b[38;5;179m"     // Warm amber for magic signatures
 #define BORDER_COLOR    "\x1b[38;5;109m"     // Subtle border / separator color
-#define ANALYSIS_TEXT_COLOR      "\x1b[38;5;12m"      // Royal blue for general text
+#define ANALYSIS_TEXT_COLOR "\x1b[38;5;67m"  // Royal blue for general text
+#define ERROR_COLOR     "\x1b[38;5;160m"     // Bright red for errors
+
+#define HIGHLIGHT_COLOR "\x1b[1;97;104m"     // Bright white on bright blue background for search highlights]"
 
 extern const char *heatmap_colors[16];
 
@@ -54,6 +57,7 @@ void print_color(const char *color_code, bool enable_color);
 FILE *open_pager(void);
 int is_space(size_t n, unsigned char *str);
 
+// Format a local timestamp into a readable string.
 typedef struct {
     bool exists;
     bool has_created;
@@ -63,7 +67,21 @@ typedef struct {
     time_t modified_at;
 } file_metadata;
 
+// Parses the analytic stuff for the footer, including magic byte summary and byte distribution statistics.
+typedef struct {
+    size_t total_bytes;
+    size_t zero_bytes;
+    size_t line_count;
+    int magic_count;
+    float printable;
+    float control;
+    float high_byte;
+    float whitespace;
+} dump_analysis;
+
 bool get_file_metadata(const char *filename, file_metadata *meta);
 void format_time_local(time_t value, char *buffer, size_t buffer_size);
+
+void analyse(dump_analysis *analysis, unsigned char *data, size_t len);
 
 #endif

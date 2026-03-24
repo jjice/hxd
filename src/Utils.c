@@ -8,6 +8,7 @@
 #include "Utils.h"
 
 #include <string.h>
+#include <ctype.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -78,7 +79,7 @@ FILE *open_pager(void) {
 }
 
 int is_space(size_t n, unsigned char *str) {
-    unsigned char *end = str + n;
+    const unsigned char *end = str + n;
     while (str < end) {
         if (*str++ != 32) return 0;
     }
@@ -165,4 +166,27 @@ bool get_file_metadata(const char *filename, file_metadata *meta) {
     meta->exists = true;
     return true;
     #endif
+}
+
+void analyse(dump_analysis *analysis, unsigned char *data, size_t len) {
+    if (!analysis || !data) return;
+
+    for (size_t i = 0; i < len; i++) {
+        unsigned char byte = data[i];
+        if (byte == 0) {
+            analysis->zero_bytes++;
+        } else if (byte >= 32 && byte <= 126) {
+            analysis->printable++;
+        } else if (byte <= 31 || byte == 127) {
+            analysis->control++;
+        } else if (byte >= 128) {
+            analysis->high_byte++;
+        }
+
+        if (isspace(byte)) {
+            analysis->whitespace++;
+        }
+    }
+
+    analysis->total_bytes += len;
 }
