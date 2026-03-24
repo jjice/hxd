@@ -23,7 +23,9 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 - [ ] **C-Style Array**: Export output as c-style array
 
 - [ ] **Analysis Toollit**: Top 10 distribution -> or even moore with flag, 
-also global entropy (if entropy is set)
+
+    --> 0x00 Blocks strings count utf 8 blocks entropie blocks "high" compressed blocks decrypted blocks
+
 ---
 
 ## 📦 Distribution & Releases
@@ -71,5 +73,6 @@ also global entropy (if entropy is set)
 - [x] **Auto skip**: Skip null lines
 - [x] **Byte Grouping**: Setting for advanced bytegrouping `g`
 - [x] **Advanced Mode**: Octal, decimal, binary
+
 ## 🐞 Bugs
 - [ ] hxed.exe -f (file) -l 100 -hm adaptiv : fixed adaptiv heatmap while limit is set
