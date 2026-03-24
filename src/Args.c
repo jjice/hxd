@@ -6,6 +6,7 @@
  */
 
 #include <stdbool.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -50,6 +51,139 @@ size_t get_suffix(const char *endchar) {
     }
 }
 
+static void fail_search_parse(const char *value) {
+    fprintf(stderr, "Error: invalid search value <%s>\n", value);
+    exit(EXIT_FAILURE);
+}
+
+static unsigned char *alloc_search_buffer(size_t len) {
+    unsigned char *buffer = malloc(len > 0 ? len : 1);
+    if (!buffer) {
+        fprintf(stderr, "Error: Memory allocation failed for search string\n");
+        exit(EXIT_FAILURE);
+    }
+    return buffer;
+}
+
+static void parse_ascii_search(const char *value, const char *body, options *option) {
+    size_t body_len = strlen(body);
+    if (body_len == 0 || body_len > MAX_SEARCH_LEN) {
+        fail_search_parse(value);
+    }
+
+    option->search = alloc_search_buffer(body_len);
+    memcpy(option->search, body, body_len);
+    option->search_len = body_len;
+}
+
+static void parse_numeric_search(const char *value, const char *body, int base, options *option) {
+    size_t body_len = strlen(body);
+    unsigned char *parsed = alloc_search_buffer(MAX_SEARCH_LEN);
+    size_t count = 0;
+    size_t i = 0;
+
+    while (i < body_len) {
+        while (i < body_len && (isspace((unsigned char)body[i]) || body[i] == ',')) i++;
+        if (i >= body_len) break;
+
+        size_t start = i;
+        while (i < body_len && !isspace((unsigned char)body[i]) && body[i] != ',') i++;
+
+        char token[32] = {0};
+        size_t token_len = i - start;
+        if (token_len == 0 || token_len >= sizeof(token)) {
+            free(parsed);
+            fail_search_parse(value);
+        }
+
+        memcpy(token, body + start, token_len);
+
+        char *endptr = NULL;
+        errno = 0;
+        unsigned long parsed_value = strtoul(token, &endptr, base);
+        if (errno == ERANGE || endptr == token || *endptr != '\0' || parsed_value > 255 || count >= MAX_SEARCH_LEN) {
+            free(parsed);
+            fail_search_parse(value);
+        }
+
+        parsed[count++] = (unsigned char)parsed_value;
+    }
+
+    if (count == 0) {
+        free(parsed);
+        fail_search_parse(value);
+    }
+
+    option->search = parsed;
+    option->search_len = count;
+}
+
+static void parse_hex_search(const char *value, const char *body, options *option) {
+    size_t body_len = strlen(body);
+    bool has_separators = false;
+
+    if (body_len == 0) {
+        fail_search_parse(value);
+    }
+
+    for (size_t i = 0; i < body_len; i++) {
+        if (isspace((unsigned char)body[i]) || body[i] == ',') {
+            has_separators = true;
+            break;
+        }
+    }
+
+    if (has_separators) {
+        parse_numeric_search(value, body, 16, option);
+        return;
+    }
+
+    if ((body_len % 2) != 0 || (body_len / 2) > MAX_SEARCH_LEN) {
+        fail_search_parse(value);
+    }
+
+    option->search = alloc_search_buffer(body_len / 2);
+    option->search_len = body_len / 2;
+
+    for (size_t i = 0; i < option->search_len; i++) {
+        char token[3] = {body[i * 2], body[i * 2 + 1], '\0'};
+        char *endptr = NULL;
+        errno = 0;
+        unsigned long parsed_value = strtoul(token, &endptr, 16);
+        if (errno == ERANGE || endptr == token || *endptr != '\0') {
+            free(option->search);
+            option->search = NULL;
+            option->search_len = 0;
+            fail_search_parse(value);
+        }
+        option->search[i] = (unsigned char)parsed_value;
+    }
+}
+
+static void parse_search_argument(const char *value, options *option) {
+    if (strncmp(value, "ascii:", 6) == 0) {
+        parse_ascii_search(value, value + 6, option);
+        return;
+    }
+
+    if (strncmp(value, "b:", 2) == 0) {
+        parse_numeric_search(value, value + 2, 2, option);
+        return;
+    }
+
+    if (strncmp(value, "d:", 2) == 0) {
+        parse_numeric_search(value, value + 2, 10, option);
+        return;
+    }
+
+    if (strncmp(value, "x:", 2) == 0) {
+        parse_hex_search(value, value + 2, option);
+        return;
+    }
+
+    fail_search_parse(value);
+}
+
 // Function to read a chunk of the file into the buffer, 
 // starting from read_start and respecting read_limit
 options *get_options(int argc, char *argv[]) {
@@ -76,9 +210,8 @@ options *get_options(int argc, char *argv[]) {
     option->offset_read = 0;
     option->limit_read = 0;
     option->read_size = 0;
-    option->search_ascii = false;
-    option->search_hex = false;
     option->search = NULL;
+    option->search_len = 0;
     option->pager = false;
     option->raw = false;
 
@@ -99,7 +232,7 @@ options *get_options(int argc, char *argv[]) {
         "  -m,  --mode            <num|'name'>       Output mode (0 = hex, 1 = bin, 2 = oct, 3 = dec) (default: 0|hex)\n"
         "  -hm, --heatmap         <adaptiv|fixed>    Show colors as heatmap with 16 colors (default: none)\n"
         "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line)\n"
-        "  -g,  --grouping        <num>              Grouping size (bytes) for output (default: 1)\n"
+        "  -g,  --grouping        <num>              Grouping size (default: 1, 0 = no spaces)\n"
         "  -a,  --ascii                              Toggle ASCII representation column (default: on)\n"
         "  -c,  --color                              Toggle syntax highlighting / colors (default: on)\n"
         "  -s,  --string                             Toggle string highlighting (default: off)\n"
@@ -113,8 +246,9 @@ options *get_options(int argc, char *argv[]) {
         "  -r,  --read-size       <num>              Stop after this many bytes (default: read to EOF)\n"
         "\n"
         "Search:\n"
-        "  -sa, --search-ascii    '<ascii chars>'    Search for all lines with input str as ascii\n"
-        "  -sh, --search-hex      '<hex chars>'      Search for all lines with input str as hex\n"
+        "  -se, --search          <pattern>          Search and print matching lines only\n"
+        "                                              ascii:<text>  | d:<num[,..]>\n"
+        "                                              b:<bits[,..]> | x:<hex>\n"
         "\n"
         "Output:\n"
         "  -p,  --pager                              Toggle pager output (default: off)\n"
@@ -131,6 +265,10 @@ options *get_options(int argc, char *argv[]) {
         "  echo 'Hello World' | hxed          # pipeline to hxed\n"
         "  hxed -w 0 -ro test > o.txt         # raw output without newlines into a file\n"
         "  hxed -s data.bin                   # with string highlighting\n"
+        "  hxed -se ascii:Hello file.bin      # ascii search\n"
+        "  hxed -se x:48656c6c6f file.bin     # hex search\n"
+        "  hxed -se b:01001000,01101001 file  # binary byte search\n"
+        "  hxed -se d:72,101,108,108,111 file # decimal byte search\n"
         "\n"
         "Notes:\n"
         "  * Offsets and limits must be positive integers.\n"
@@ -140,7 +278,7 @@ options *get_options(int argc, char *argv[]) {
         "  * Toggle flags flip the current default state.\n"
         "\n";
 
-    char help_short[] = "See -h for more information\n";
+    const char help_short[] = "See -h for more information\n";
     
     // Loop through command line arguments starting from index 1.
     for (int x = 1; x < argc; x++) {
@@ -335,7 +473,7 @@ options *get_options(int argc, char *argv[]) {
                 size_t suffix = get_suffix(endptr); 
                 val = suffix * val;
 
-                if (suffix <= 0) {
+                if (suffix == 0) {
                     fprintf(stderr, "Nonvalid Prefix\n");
                     exit(EXIT_FAILURE);
                 }
@@ -380,7 +518,7 @@ options *get_options(int argc, char *argv[]) {
                 size_t suffix = get_suffix(endptr); 
                 val = suffix * val;
 
-                if (suffix <= 0) {
+                if (suffix == 0) {
                     fprintf(stderr, "Nonvalid Prefix\n");
                     exit(EXIT_FAILURE);
                 }
@@ -437,7 +575,7 @@ options *get_options(int argc, char *argv[]) {
                 size_t suffix = get_suffix(endptr); 
                 val = suffix * val;
 
-                if (suffix <= 0) {
+                if (suffix == 0) {
                     fprintf(stderr, "Nonvalid Prefix\n");
                     exit(EXIT_FAILURE);
                 }
@@ -457,7 +595,7 @@ options *get_options(int argc, char *argv[]) {
 
                 // Check for positiv value
                 if (val <= 0) {
-                    fprintf(stderr, "Error: read must be positive\n");
+                    fprintf(stderr, "Error: read must be > 0\n");
                     exit(EXIT_FAILURE);
                 }
 
@@ -473,7 +611,7 @@ options *get_options(int argc, char *argv[]) {
             
         }
 
-        else if (strcmp(argv[x], "-sa") == 0 || (strcmp(argv[x], "--search-ascii") == 0)){
+        else if (strcmp(argv[x], "-se") == 0 || (strcmp(argv[x], "--search") == 0)){
             // Search quarry argument.
             if (x + 1 >= argc) {
                 fprintf(stderr, "Error: Search requires an argument\n");
@@ -481,48 +619,13 @@ options *get_options(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
 
-            if (strlen(argv[x + 1]) > MAX_SEARCH_LEN) {
-                printf("Search string is too long ( .... > %d )\n", (int) MAX_SEARCH_LEN);
-                exit(EXIT_FAILURE);
+            if (option->search != NULL) {
+                free(option->search);
+                option->search = NULL;
+                option->search_len = 0;
             }
 
-            //search_len = (int) strlen(argv[x + 1]);
-            option->search = (unsigned char *) malloc(strlen(argv[x + 1]) + 1);
-            if (option->search == NULL) {
-                fprintf(stderr, "Error: Memory allocation failed for search string\n");
-                exit(EXIT_FAILURE);
-            }
-
-            //search_len = (int) strlen(argv[x + 1]);
-            strcpy((char *)option->search, argv[x + 1]);
-            option->search_ascii = true;
-
-            x++;
-        }
-
-        else if (strcmp(argv[x], "-sh") == 0 || (strcmp(argv[x], "--search-hex") == 0)){
-            // Search quarry argument.
-            if (x + 1 >= argc) {
-                fprintf(stderr, "Error: Search requires an argument\n");
-                printf("%s", help_short);
-                exit(EXIT_FAILURE);
-            }
-
-            if (strlen(argv[x + 1]) > MAX_SEARCH_LEN) {
-                printf("Search string is too long ( .... > %d )\n", (int) MAX_SEARCH_LEN);
-                exit(EXIT_FAILURE);
-            }
-            
-            //search_len = (int) strlen(argv[x + 1]);
-            option->search = (unsigned char *) malloc(strlen(argv[x + 1]) + 1);
-            if (option->search == NULL) {
-                fprintf(stderr, "Error: Memory allocation failed for search string\n");
-                exit(EXIT_FAILURE);
-            }
-
-            strcpy((char *)option->search, argv[x + 1]);
-            option->search_hex = true;
-
+            parse_search_argument(argv[x + 1], option);
             x++;
         }
 
