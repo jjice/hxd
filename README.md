@@ -9,7 +9,10 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 ---
+<img alt="Fixed heatmap ASCII art output" src=".docs/heatmap_hxed.svg" width="960">
 
+###### This demo uses a `0x00` background and a handcrafted `HXED` byte pattern so the fixed heatmap shows clear per-letter colors with a top-to-bottom gradient.
+---
 ## Contents
 
 - [Why hxed](#why-hxed)
@@ -39,12 +42,13 @@ If you spend time inspecting binaries, debugging odd files, reversing formats, o
 | | Feature | Description |
 |---|---|---|
 | 📟 | **Classic Layout** | Perfectly aligned hex bytes, addresses, and ASCII preview |
+| 🧩 | **Flexible Grouping** | Group bytes with `-g` for faster pattern scanning in dense dumps |
 | 📦 | **Raw Output Mode** | Raw output to a file or to a pipe |
 | 🌈 | **Adaptive Heatmaps** | Visualize byte ranges with 16-color `adaptiv` or `fixed` modes |
 | 🔍 | **Semantic Coloring** | Instantly distinguish printable text, null bytes, and control characters |
 | 🧵 | **String Highlighting** | Specialized mode to make embedded strings pop |
 | 📊 | **Entropy Meter** | Real-time Shannon entropy bar per line — spot encryption/compression instantly |
-| 🔎 | **Pattern Search** | Find ASCII (`-sa`) or hex (`-sh`) patterns across the entire dump |
+| 🔎 | **Pattern Search** | Match bytes via `-se` in `ascii:`, `x:`, `d:`, or `b:` format |
 | 🏷️ | **Header + Footer Analysis** | Toggle file metadata and magic byte detection with `-th` |
 | ⚡ | **Ultra Flexible** | Custom widths, offsets, and limits for surgical binary inspection |
 | 🌊 | **Pipe Ready** | Seamless `stdin` support with built-in pager integration (`less`/`more`) |
@@ -57,17 +61,15 @@ If you spend time inspecting binaries, debugging odd files, reversing formats, o
 Quick jumps:
 - [Header + footer analysis](#header--footer-analysis--hxed--th-file)
 - [Normal dump](#normal-dump--hxed-file)
-- [Adaptive heatmap](#adaptive-heatmap--hxed--hm-adaptiv-file)
+- [Grouping view](#grouping-view--hxed--g-4-file)
+- [Heatmap gradient](#heatmap-gradient--hxed--hm-fixed-heatmap_gradientbin)
+- [Fixed heatmap art](#fixed-heatmap-art--hxed--th--hm-fixed--a--g-1--w-44-heatmap_hxedbin)
 - [Entropy view](#entropy-view--hxed--e--hm-fixed-file)
-- [ASCII search](#ascii-search--hxed--sa-secret-file)
+- [ASCII search](#ascii-search--hxed--se-asciisecret-file)
 - [String mode](#string-mode--hxed--s-file)
 - [Pipe workflow](#pipe-workflow--cat-file--hxed--th)
 
-### Header + footer analysis &nbsp;·&nbsp; `hxed -th <file>`
 
-<img alt="Header and footer analysis output" src=".docs/magic.svg" width="960">
-
-Header info, footer analysis, and magic-byte detection help you understand a file at a glance instead of manually piecing it together.
 
 ### Normal dump &nbsp;·&nbsp; `hxed <file>`
 
@@ -75,11 +77,26 @@ Header info, footer analysis, and magic-byte detection help you understand a fil
 
 Classic layout, readable addresses, colored bytes, and ASCII preview without losing the terminal feel.
 
-### Adaptive heatmap &nbsp;·&nbsp; `hxed -hm adaptiv <file>`
+### Deactivated Header &nbsp;·&nbsp; `hxed -th <file>`
 
-<img alt="Adaptive heatmap output" src=".docs/heat.svg" width="960">
+<img alt="Header and footer analysis output" src=".docs/magic.svg" width="960">
 
-See hot spots and structured ranges instantly instead of scanning long monochrome dumps line by line.
+Header info, footer analysis, and magic-byte detection help you understand a file at a glance instead of manually piecing it together.
+
+### Grouping view &nbsp;·&nbsp; `hxed -g 4 <file>`
+
+<img alt="Grouping output" src=".docs/grouping.svg" width="960">
+
+Grouping helps separate structured fields quickly when scanning packed binary data.
+
+### Heatmap gradient &nbsp;·&nbsp; `hxed -hm fixed heatmap_gradient.bin`
+
+<img alt="Heatmap gradient output" src=".docs/heat.svg" width="960">
+
+Fixed heatmap mode gives you a stable 16-step palette across the full byte range, while `adaptiv` remaps the same idea to the actual min/max values in the file.
+
+
+
 
 ### Entropy view &nbsp;·&nbsp; `hxed -e -hm fixed <file>`
 
@@ -87,7 +104,7 @@ See hot spots and structured ranges instantly instead of scanning long monochrom
 
 Useful for spotting compressed, encrypted, or unusually uniform regions quickly.
 
-### ASCII search &nbsp;·&nbsp; `hxed -sa 'secret' <file>`
+### ASCII search &nbsp;·&nbsp; `hxed -se ascii:secret <file>`
 
 <img alt="ASCII search output" src=".docs/search.svg" width="960">
 
@@ -154,8 +171,10 @@ cat file.bin | hxed [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-f, --file <filename>` | Input file (optional when using stdin) | — |
+| `-m, --mode <hex\|bin\|oct\|dec>` | Output mode | `hex` |
 | `-hm, --heatmap <adaptiv\|fixed>` | Heatmap mode with 16 colors | none |
 | `-w, --width <num>` | Bytes per line (`0` = no newline) | `16` |
+| `-g, --grouping <num>` | Group bytes visually (`0` = no spaces) | `1` |
 | `-a, --ascii` | Toggle ASCII column | on |
 | `-th, --toggle-header` | Toggle header, footer and magic byte detection | on |
 | `-o, --offset <num>` | Start reading at this byte offset | `0` |
@@ -165,8 +184,8 @@ cat file.bin | hxed [options]
 | `-s, --string` | Toggle string highlighting | off |
 | `-p, --pager` | Toggle pager output through `less`/`more` | off |
 | `-e, --entropy` | Toggle Shannon entropy bar per line | off |
-| `-sa, --search-ascii '<str>'` | Show only lines matching ASCII pattern | — |
-| `-sh, --search-hex '<hex>'` | Show only lines matching hex pattern | — |
+| `-sz, --skip-zero` | Skip all-zero lines | off |
+| `-se, --search <pattern>` | Search `ascii:`, `x:`, `d:`, or `b:` patterns | — |
 | `-ro, --raw` | Raw output (no ANSI, for piping to files) | — |
 | `-v, --version` | Show version and exit | — |
 | `-h, --help` | Show help and exit | — |
@@ -176,8 +195,10 @@ cat file.bin | hxed [options]
 - `-a` disables ASCII because ASCII is on by default.
 - `-c` disables colors because color is on by default.
 - `-th` disables the header/footer block because it is on by default.
+- `-se` highlights the matched bytes and only prints matching lines.
 - `--limit` must not be less than `--offset`.
 - Magic byte detection is disabled when `--offset` is set.
+- Search currently works for files, not for `stdin`.
 - When reading from stdin, a filename is not required.
 
 ---
@@ -191,14 +212,23 @@ hxed example.txt
 # Smaller width
 hxed -w 8 example.txt
 
+# Group bytes in blocks of 4
+hxed -g 4 firmware.bin
+
 # 32 bytes/line, toggle ASCII column off
 hxed -w 32 -a secret.bin
+
+# Render in decimal mode
+hxed -m dec -g 8 sample.bin
 
 # Adaptive heatmap on a binary
 hxed -hm adaptiv image.png
 
 # Fixed heatmap, toggle ASCII off
 hxed -hm fixed -a sample.bin
+
+# Skip zero-only lines
+hxed -sz firmware.bin
 
 # Inspect a slice of a file (bytes 1024–2048)
 hxed -o 1k -l 2k sample.bin
@@ -207,10 +237,16 @@ hxed -o 1k -l 2k sample.bin
 hxed -s image.png
 
 # Search for an ASCII pattern
-hxed -sa 'ABC' sample.bin
+hxed -se 'ascii:ABC' sample.bin
 
 # Search for a hex pattern
-hxed -sh 'FF D8 FF' photo.jpg
+hxed -se 'x:FF D8 FF' photo.jpg
+
+# Search for decimal bytes
+hxed -se 'd:72,101,108,108,111' sample.bin
+
+# Search for binary bytes
+hxed -se 'b:01001000,01101001' sample.bin
 
 # Raw output into a file (no newlines, no ANSI)
 hxed -w 0 -ro binary > output.txt
