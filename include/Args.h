@@ -33,9 +33,8 @@ typedef struct {
     size_t offset_read;    // Bytes to skip until print
     size_t limit_read;     // Byte to stop reading
     size_t read_size;      // Bytes to read
-    bool search_ascii;     // Flag to determine if search for ascii string is active
-    bool search_hex;       // Flag to determine if search for hex string is active
-    unsigned char *search; // Pointer to the search string (either ASCII or hex, depending on flags)
+    unsigned char *search; // Pointer to the parsed search bytes
+    size_t search_len;     // Parsed search length in bytes
     bool pager;            // Flag to determine if output should be sent to a pager (e.g., less)
     bool raw;              // Flag to determine if output should be raw
 } options;
