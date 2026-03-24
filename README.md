@@ -48,7 +48,7 @@ If you spend time inspecting binaries, debugging odd files, reversing formats, o
 | 🔍 | **Semantic Coloring** | Instantly distinguish printable text, null bytes, and control characters |
 | 🧵 | **String Highlighting** | Specialized mode to make embedded strings pop |
 | 📊 | **Entropy Meter** | Real-time Shannon entropy bar per line — spot encryption/compression instantly |
-| 🔎 | **Pattern Search** | Match bytes via `-se` in `ascii:`, `x:`, `d:`, or `b:` format |
+| 🔎 | **Pattern Search** | Match bytes via `-se` in `ascii:/a:`, `x:`, `d:`, or `b:` format |
 | 🏷️ | **Header + Footer Analysis** | Toggle file metadata and magic byte detection with `-th` |
 | ⚡ | **Ultra Flexible** | Custom widths, offsets, and limits for surgical binary inspection |
 | 🌊 | **Pipe Ready** | Seamless `stdin` support with built-in pager integration (`less`/`more`) |
