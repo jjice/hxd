@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$InstallScope,
     [string]$InstallDir,
     [string]$InstallMode
@@ -330,7 +330,7 @@ function Install-Completion {
         Copy-Item $src $dest -Force
     }
     catch {
-        Write-Warn "Could not copy completion file to $dest: $_"
+        Write-Warn "Could not copy completion file to $dest $_"
         return
     }
 
