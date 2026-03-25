@@ -5,6 +5,8 @@
  * See LICENSE file in the project root for full license information.
  */
 
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "File.h"
@@ -99,36 +101,16 @@ void check_file(options *option) {
     }
 }
 
-// Find the minimum and maximum byte values in the file for heatmap scaling
-void find_extrema(unsigned char *_max, unsigned char *_min, FILE *file) {
-    unsigned char _buffer[MAX_BUFF_SIZE] = {0};
-    int read_bytes = 0;
-
+// Find the minimum and maximum byte values in inside one line for heatmap scaling
+void find_extrema(unsigned char *_max, unsigned char *_min, unsigned char *line, size_t line_len) {
+    
     *_min = 255;
     *_max = 0;
 
-    // Get file size for read_limit
-    fseek(file, 0, SEEK_END);
-    size_t file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    // Read through the file in chunks and update min/max values
-    while (1) {
-        read_stream_to_buffer(&read_bytes, file, 0, file_size, _buffer, false);
-        if (read_bytes <= 0) break;
-
-        for (size_t index = 0; index < (size_t)read_bytes; index++) {
-            if (*_min > _buffer[index]) *_min = _buffer[index];
-            if (*_max < _buffer[index]) *_max = _buffer[index];
-
-            if (*_min == 0 && *_max == 255) {
-                // Reset file position before early exit so the dump can read from the beginning again.
-                fseek(file, 0, SEEK_SET);
-                return;
-            }
-        }
+    // Read through the line and update min/max values
+    for (size_t i = 0; i < line_len; i++) {
+        if (*_min > line[i]) *_min = line[i];
+        if (*_max < line[i]) *_max = line[i];
     }
-
-    // Reset file position to beginning
-    fseek(file, 0, SEEK_SET);
+    return;
 }

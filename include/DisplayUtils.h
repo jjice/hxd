@@ -26,8 +26,6 @@ typedef struct {
     size_t search_match_index;
     int addr_width;
     int visible_columns;
-    unsigned char _max;
-    unsigned char _min;
     bool no_newline;
 } display_state;
 

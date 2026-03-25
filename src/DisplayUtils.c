@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "File.h"
 #include "MagicBytes.h"
 #include "Utils.h"
 
@@ -56,13 +57,14 @@ static inline int get_chars_per_byte(const options *option) {
 }
 
 // Maps a byte value to a color code based on the current heatmap, string, and color options.
-static inline const char *resolve_byte_color(unsigned char *byte, const display_state *state) {
+static inline const char *resolve_byte_color(unsigned char *byte, const display_state *state, unsigned char _max, unsigned char _min) {
     const options *option = state->option;
     unsigned char b = *byte;
     const char *col = RESET;
 
     if (option->heatmap == 1) {
-        col = heatmap_colors[INDEX_MAP(b, state->_min, state->_max)];
+        // Scale byte value to range of heatmap colors
+        col = heatmap_colors[(int)((b - _min) * 15 / (_max - _min + 1))];
     } else if (option->heatmap == 2) {
         col = heatmap_colors[(int)(b / 16)];
     } else if (option->string) {
@@ -198,10 +200,13 @@ static inline void append_blank_cell(char *line, size_t *line_pos, const display
 static void append_hex_section(char *line, size_t *line_pos, const display_state *state, int processed, int line_len) {
     int column_count = get_render_column_count(state);
 
+    unsigned char max, min;
+    find_extrema(&max, &min, buffer + processed, (size_t)line_len);
+
     for (int i = 0; i < column_count; i++) {
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
-            const char *col = resolve_byte_color(&b, state);
+            const char *col = resolve_byte_color(&b, state, max, min);
             bool highlight = state->option->color &&
                              byte_is_highlighted(state, state->addr_display + (size_t)i);
 
@@ -224,10 +229,13 @@ static void append_hex_section(char *line, size_t *line_pos, const display_state
 static void append_octal_section(char *line, size_t *line_pos, const display_state *state, int processed, int line_len) {
     int column_count = get_render_column_count(state);
 
+    unsigned char max, min;
+    find_extrema(&max, &min, buffer + processed, (size_t)line_len);
+
     for (int i = 0; i < column_count; i++) {
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
-            const char *col = resolve_byte_color(&b, state);
+            const char *col = resolve_byte_color(&b, state, max, min);
             bool highlight = state->option->color &&
                              byte_is_highlighted(state, state->addr_display + (size_t)i);
 
@@ -250,10 +258,13 @@ static void append_octal_section(char *line, size_t *line_pos, const display_sta
 static void append_binary_section(char *line, size_t *line_pos, const display_state *state, int processed, int line_len) {
     int column_count = get_render_column_count(state);
 
+    unsigned char max, min;
+    find_extrema(&max, &min, buffer + processed, (size_t)line_len);
+
     for (int i = 0; i < column_count; i++) {
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
-            const char *col = resolve_byte_color(&b, state);
+            const char *col = resolve_byte_color(&b, state, max, min);
             bool highlight = state->option->color &&
                              byte_is_highlighted(state, state->addr_display + (size_t)i);
 
@@ -276,10 +287,13 @@ static void append_binary_section(char *line, size_t *line_pos, const display_st
 static void append_decimal_section(char *line, size_t *line_pos, const display_state *state, int processed, int line_len) {
     int column_count = get_render_column_count(state);
 
+    unsigned char max, min;
+    find_extrema(&max, &min, buffer + processed, (size_t)line_len);
+
     for (int i = 0; i < column_count; i++) {
         if (i < line_len) {
             unsigned char b = buffer[processed + i];
-            const char *col = resolve_byte_color(&b, state);
+            const char *col = resolve_byte_color(&b, state, max, min);
             bool highlight = state->option->color &&
                              byte_is_highlighted(state, state->addr_display + (size_t)i);
 
@@ -301,6 +315,8 @@ static void append_decimal_section(char *line, size_t *line_pos, const display_s
 // Appends the ASCII representation of bytes to the line, applying coloring and spacing based on options.
 static int append_ascii_section(char *line, size_t *line_pos, const display_state *state, int processed, int line_len) {
     int char_written = 0;
+    unsigned char max, min;
+    find_extrema(&max, &min, buffer + processed, (size_t)line_len);
 
     if (state->option->ascii) {
         char *c = (state->option->color) ? BORDER_COLOR : "";
@@ -308,7 +324,7 @@ static int append_ascii_section(char *line, size_t *line_pos, const display_stat
 
         for (int i = 0; i < line_len; i++) {
             unsigned char c = buffer[processed + i];
-            const char *col = resolve_byte_color(&c, state);
+            const char *col = resolve_byte_color(&c, state, max, min);
             char disp = (c >= 32 && c < 127) ? (char)c : '.';
             bool highlight = state->option->color &&
                              byte_is_highlighted(state, state->addr_display + (size_t)i);

@@ -68,12 +68,12 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
     char modified_at[32] = "n/a";
     char magic_line[1024] = {0};
     size_t magic_pos = 0;
-    size_t shown_size = analysis->total_bytes;
+    size_t total_size = analysis->total_bytes;
     double zero_pct = 0.0;
 
     if (!option->pipeline) {
         get_file_metadata(option->filename, &meta);
-        if (meta.exists) shown_size = meta.file_size;
+        if (meta.exists) total_size = meta.file_size;
         if (meta.has_created) format_time_local(meta.created_at, created_at, sizeof(created_at));
         if (meta.has_modified) format_time_local(meta.modified_at, modified_at, sizeof(modified_at));
     }
@@ -99,7 +99,7 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
     fprintf(out, "%s  |%s size %zu B ; zero %zu (%.1f%%) ; magic %d\n",
             option->color ? BORDER_COLOR : "",
             option->color ? ANALYSIS_TEXT_COLOR : "",
-            shown_size,
+            total_size,
             analysis->zero_bytes,
             zero_pct,            
             analysis->magic_count);
@@ -139,6 +139,9 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
             analysis->line_count);
 
     if (option->read_size != 0) fprintf(out, "read %zu", option->read_size);
+    else if (option->limit_read == total_size) fprintf(out, "limit eof");
+    else if (option->limit_read != 0) fprintf(out, "limit %zu", option->limit_read);
+
     else fprintf(out, "limit eof");
     fputc('\n', out);
 
@@ -185,8 +188,6 @@ void print_hex(options *option) {
     state.search_match_index = 0;
     state.addr_width = 8;
     state.visible_columns = _calc_visible_columns(option);
-    state._max = 255;
-    state._min = 0;
     state.no_newline = no_newline;
 
     // Calculates dynamic address width to keep header and rows aligned.
@@ -215,10 +216,6 @@ void print_hex(options *option) {
     if (option->pager) {
         out = open_pager();
         state.out = out;
-    }
-
-    if (option->heatmap == 1) {
-        find_extrema(&state._max, &state._min, file);
     }
 
     // Search for magic byte signatures in the file header if not skipped

@@ -15,6 +15,6 @@
 
 void read_stream_to_buffer(int *out_read, FILE *file, size_t read_start, size_t read_limit, unsigned char *_buffer, bool _no_seek);
 void check_file(options *option);
-void find_extrema(unsigned char *_max, unsigned char *_min, FILE *file);
+void find_extrema(unsigned char *_max, unsigned char *_min, unsigned char *line, size_t line_len);
 
 #endif
