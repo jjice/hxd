@@ -189,4 +189,12 @@ void analyse(dump_analysis *analysis, unsigned char *data, size_t len) {
     }
 
     analysis->total_bytes += len;
+
+    if (analysis->total_bytes == 0) return;
+
+    analysis->zero_bytes = analysis->zero_bytes / analysis->total_bytes;
+    analysis->printable = analysis->printable / analysis->total_bytes;
+    analysis->control = analysis->control / analysis->total_bytes;
+    analysis->high_byte = analysis->high_byte / analysis->total_bytes;
+    analysis->whitespace = analysis->whitespace / analysis->total_bytes;
 }
