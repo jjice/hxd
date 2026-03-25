@@ -42,7 +42,6 @@ else()
     )
 endif()
 
-# 4. INSTALLATION
 include(GNUInstallDirs)
 
 install(TARGETS hxed
