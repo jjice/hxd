@@ -230,7 +230,7 @@ cat file.bin | hxed [options]
 | `-f, --file <filename>` | Input file (optional when using stdin) | — |
 | `-m, --mode <hex\|bin\|oct\|dec>` | Output mode | `hex` |
 | `-hm, --heatmap <adaptiv\|fixed>` | Heatmap mode with 16 colors | none |
-| `-w, --width <num>` | Bytes per line (`0` = no newline) | `16` |
+| `-w, --width <num>` | Bytes per line | `16` |
 | `-g, --grouping <num>` | Group bytes visually (`0` = no spaces) | `1` |
 | `-a, --ascii` | Toggle ASCII column | on |
 | `-th, --toggle-header` | Deactivate header, footer and magic byte detection | on |
