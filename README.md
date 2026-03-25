@@ -34,6 +34,7 @@
 - It makes structure easier to spot at a glance.
 - It keeps strings, null bytes, and noisy regions visually distinct.
 - It gives you one small tool for normal dumps, focused searches, entropy checks, raw output, and pipe workflows.
+- Intuitive usage with bash completion for `fish`, `bash`, `zsh` and `Powershell`. No wered / complex flags!
 
 If you spend time inspecting binaries, debugging odd files, reversing formats, or comparing unknown blobs, `hxed` is built to make that pass faster and easier on the eyes.
 
