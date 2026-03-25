@@ -20,6 +20,14 @@ $ScriptPath = $MyInvocation.MyCommand.Path
 
 $DownloadTimeoutSec = 120
 
+$WindowsArch  = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+$AllowRelease = $true
+$ReleaseAsset = 'hxed-windows-x64.exe'
+
+if ($WindowsArch -ne 'x64') {
+    $AllowRelease = $false
+}
+
 # Track installation state for rollback
 $InstalledBinary  = $null
 $TempFiles        = [System.Collections.Generic.List[string]]::new()
@@ -154,18 +162,34 @@ function Read-InstallTarget {
 }
 
 function Read-InstallMode {
+    param([bool]$AllowRelease = $true, [string]$Arch = 'x64')
+
     while ($true) {
-        Write-Host ''
-        Write-Host '  Installation source:' -ForegroundColor White
-        Write-Host '    1) Build from source (this repository)'
-        Write-Host '    2) Download latest release binary from GitHub'
-        $c = Read-Host '  Choose 1 or 2 [2]'
-        if ([string]::IsNullOrWhiteSpace($c)) { $c = '2' }
-        switch ($c) {
-            '1' { return 'build' }
-            '2' { return 'release' }
+        if ($AllowRelease) {
+            Write-Host ''
+            Write-Host '  Installation source:' -ForegroundColor White
+            Write-Host '    1) Build from source (this repository)'
+            Write-Host '    2) Download latest release binary from GitHub'
+            $c = Read-Host '  Choose 1 or 2 [2]'
+            if ([string]::IsNullOrWhiteSpace($c)) { $c = '2' }
+            switch ($c) {
+                '1' { return 'build' }
+                '2' { return 'release' }
+            }
+            Write-Warn 'Please answer with 1 or 2.'
+            continue
         }
-        Write-Warn 'Please answer with 1 or 2.'
+
+        Write-Warn "No prebuilt release asset is available for this Windows architecture ($Arch)."
+        $fallback = Read-Host '  Build from source instead? [Y/n]'
+        if ([string]::IsNullOrWhiteSpace($fallback)) { $fallback = 'y' }
+        switch ($fallback.Trim().ToLowerInvariant()) {
+            'y' { return 'build' }
+            'yes' { return 'build' }
+            'n' { Write-Fatal 'Installation cancelled by user.' }
+            'no' { Write-Fatal 'Installation cancelled by user.' }
+        }
+        Write-Warn 'Please answer y or n.'
     }
 }
 
@@ -238,13 +262,12 @@ function Install-FromBuild {
 }
 
 function Install-FromRelease {
-    param([string]$TargetExe)
+    param([string]$TargetExe, [string]$ReleaseUrl)
 
     $tmp = [System.IO.Path]::GetTempFileName() + '.exe'
     $TempFiles.Add($tmp)
 
-    $releaseUrl = "$RepoUrl/releases/latest/download/hxed-windows-x64.exe"
-    Invoke-Download -Uri $releaseUrl -OutFile $tmp
+    Invoke-Download -Uri $ReleaseUrl -OutFile $tmp
 
     Copy-Item $tmp $TargetExe -Force
 }
@@ -354,12 +377,14 @@ try {
 
     # 2. Mode
     if ([string]::IsNullOrWhiteSpace($InstallMode)) {
-        $InstallMode = Read-InstallMode
+        $InstallMode = Read-InstallMode -AllowRelease $AllowRelease -Arch $WindowsArch
     }
+
+    $releaseUrl = "$RepoUrl/releases/latest/download/$ReleaseAsset"
 
     Write-Host ''
     Write-Step "Install directory : $resolvedDir"
-    Write-Step "Platform          : Windows x64"
+    Write-Step "Platform          : Windows $WindowsArch"
     Write-Host ''
 
     # 3. Elevation + writability
@@ -373,7 +398,7 @@ try {
     if ($InstallMode -eq 'build') {
         Install-FromBuild   -TargetExe $targetExe
     } else {
-        Install-FromRelease -TargetExe $targetExe
+        Install-FromRelease -TargetExe $targetExe -ReleaseUrl $releaseUrl
     }
 
     $InstalledBinary = $targetExe

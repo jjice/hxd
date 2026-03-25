@@ -43,7 +43,7 @@ _hxed() {
     '--version[Show version]'
     '*:filename:_files'
   )
-  _arguments -s $opts
+  _arguments $opts
 }
 
 _hxed "$@"

@@ -112,11 +112,11 @@ prompt_yes_no() {
 
 prompt_target_scope() {
     while true; do
-        printf '\n'
-        say "Install target:"
-        printf '    1) Current user only  (%s)\n' "${HOME}/.local/bin"
-        printf '    2) Systemwide         (/usr/local/bin)\n'
-        printf '    3) Custom directory\n'
+        printf '\n' >&2
+        say "Install target:" >&2
+        printf '    1) Single user        (%s)\n' "${HOME}/.local/bin" >&2
+        printf '    2) Systemwide         (/usr/local/bin)\n' >&2
+        printf '    3) Custom directory\n' >&2
         local answer
         read -r -p "  Choose 1, 2, or 3 [1]: " answer
         answer="${answer:-1}"
@@ -133,11 +133,11 @@ prompt_install_mode() {
     local allow_release="$1"
 
     while true; do
-        printf '\n'
+        printf '\n' >&2
         if [[ "$allow_release" == "yes" ]]; then
-            say "Installation source:"
-            printf '    1) Build from source (this repository)\n'
-            printf '    2) Download latest release binary from GitHub\n'
+            say "Installation source:" >&2
+            printf '    1) Build from source (this repository)\n' >&2
+            printf '    2) Download latest release binary from GitHub\n' >&2
             local answer
             read -r -p "  Choose 1 or 2 [2]: " answer
             answer="${answer:-2}"
@@ -309,15 +309,26 @@ ensure_path_entry() {
     fi
 
     if [[ "${INSTALL_SCOPE}" == "systemwide" ]]; then
-        local path_file="/etc/profile.d/hxed.sh"
-        local tmp_file
-        tmp_file="$(mktemp)" || die "Could not create temporary file."
-        register_temp "$tmp_file"
-        printf 'export PATH="%s:$PATH"\n' "${INSTALL_DIR}" > "$tmp_file"
-        run_with_optional_elevation install -m 0644 "$tmp_file" "$path_file" \
-            || warn "Could not write ${path_file}. Add ${INSTALL_DIR} to PATH manually."
+        if [[ "${UNAME_S}" == "Darwin" ]]; then
+            local path_file="/etc/paths.d/hxed"
+            local tmp_file
+            tmp_file="$(mktemp)" || die "Could not create temporary file."
+            register_temp "$tmp_file"
+            printf '%s\n' "${INSTALL_DIR}" > "$tmp_file"
+            run_with_optional_elevation install -m 0644 "$tmp_file" "$path_file" \
+                || warn "Could not write ${path_file}. Add ${INSTALL_DIR} to PATH manually."
+            ok "PATH updated systemwide via ${path_file}."
+        else
+            local path_file="/etc/profile.d/hxed.sh"
+            local tmp_file
+            tmp_file="$(mktemp)" || die "Could not create temporary file."
+            register_temp "$tmp_file"
+            printf 'export PATH="%s:$PATH"\n' "${INSTALL_DIR}" > "$tmp_file"
+            run_with_optional_elevation install -m 0644 "$tmp_file" "$path_file" \
+                || warn "Could not write ${path_file}. Add ${INSTALL_DIR} to PATH manually."
+            ok "PATH updated systemwide via ${path_file}."
+        fi
         export PATH="${INSTALL_DIR}:$PATH"
-        ok "PATH updated systemwide via ${path_file}."
         return
     fi
 

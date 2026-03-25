@@ -230,7 +230,7 @@ options *get_options(int argc, char *argv[]) {
         "\n"
         "Display:\n"
         "  -m,  --mode            <num|'name'>       Output mode (0 = hex, 1 = bin, 2 = oct, 3 = dec) (default: 0|hex)\n"
-        "  -hm, --heatmap         <adaptiv|fixed>    Show colors as heatmap with 16 colors (default: none)\n"
+        "  -hm, --heatmap         <adaptiv|fixed|none> Show colors as heatmap with 16 colors (default: none)\n"
         "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line)\n"
         "  -g,  --grouping        <num>              Grouping size (default: 1, 0 = no spaces)\n"
         "  -a,  --ascii                              Toggle ASCII representation column (default: on)\n"
