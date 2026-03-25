@@ -48,7 +48,7 @@ If you spend time inspecting binaries, debugging odd files, reversing formats, o
 | 🔍 | **Semantic Coloring** | Instantly distinguish printable text, null bytes, and control characters |
 | 🧵 | **String Highlighting** | Specialized mode to make embedded strings pop |
 | 📊 | **Entropy Meter** | Real-time Shannon entropy bar per line — spot encryption/compression instantly |
-| 🔎 | **Pattern Search** | Match bytes via `-se` in `ascii:/a:`, `x:`, `d:`, or `b:` format |
+| 🔎 | **Pattern Search** | Match bytes via `-se` in `a:`, `x:`, `d:`, or `b:` format |
 | 🏷️ | **Header + Footer Analysis** | Toggle file metadata and magic byte detection with `-th` |
 | ⚡ | **Ultra Flexible** | Custom widths, offsets, and limits for surgical binary inspection |
 | 🌊 | **Pipe Ready** | Seamless `stdin` support with built-in pager integration (`less`/`more`) |
@@ -104,7 +104,7 @@ Fixed heatmap mode gives you a stable 16-step palette across the full byte range
 
 Useful for spotting compressed, encrypted, or unusually uniform regions quickly.
 
-### ASCII search &nbsp;·&nbsp; `hxed -se ascii:secret <file>`
+### ASCII search &nbsp;·&nbsp; `hxed -se a:secret <file>`
 
 <img alt="ASCII search output" src=".docs/search.svg" width="960">
 
@@ -126,6 +126,35 @@ Pipe-friendly usage keeps it practical in shell workflows where `hexdump` and `x
 
 ## 🏗️ Build & Install
 
+### Interactive install scripts
+
+The repository now includes interactive installers that can:
+
+- ask where `hxed` should be installed
+- ask before adding that directory to `PATH`
+- ask whether to build locally or download the latest GitHub release
+- ask whether completions should be installed too
+
+Linux / macOS:
+
+```bash
+chmod +x scripts/install.sh
+./scripts/install.sh
+```
+
+Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+```
+
+Notes:
+- `scripts/install.sh` installs the binary for the current user and can also copy Bash, Zsh, and Fish completions.
+- `scripts/install.ps1` installs `hxed.exe`, can add the install directory to the user `PATH`, and can register the PowerShell completion in your PowerShell profile.
+- The current GitHub release workflow publishes `hxed-linux-x64`, `hxed-windows-x64.exe`, and `hxed-macos-arm64`. On unsupported architectures, the installer falls back to building from source.
+
+### Manual build
+
 **Requirements:** a C compiler (`gcc` or `clang`) and `CMake`.
 
 ```bash
@@ -144,6 +173,33 @@ cmake --install build
 ```
 
 > **Windows tip:** Add `*/build/bin` to your `PATH` environment variable to use `hxed` from any terminal.
+
+### Manual completion install
+
+If you prefer manual setup, the completion files live in [`completions/`](./completions):
+
+```bash
+# Bash
+mkdir -p ~/.local/share/bash-completion/completions
+cp completions/hxed.bash ~/.local/share/bash-completion/completions/hxed
+
+# Zsh
+mkdir -p ~/.zsh/completions
+cp completions/_hxed ~/.zsh/completions/_hxed
+# add once to ~/.zshrc
+fpath=(~/.zsh/completions $fpath)
+autoload -Uz compinit && compinit
+
+# Fish
+mkdir -p ~/.config/fish/completions
+cp completions/hxed.fish ~/.config/fish/completions/hxed.fish
+```
+
+PowerShell:
+
+```powershell
+. "$PWD\completions\hxed.ps1"
+```
 
 ### Uninstall
 
@@ -176,7 +232,7 @@ cat file.bin | hxed [options]
 | `-w, --width <num>` | Bytes per line (`0` = no newline) | `16` |
 | `-g, --grouping <num>` | Group bytes visually (`0` = no spaces) | `1` |
 | `-a, --ascii` | Toggle ASCII column | on |
-| `-th, --toggle-header` | Toggle header, footer and magic byte detection | on |
+| `-th, --toggle-header` | Deactivate header, footer and magic byte detection | on |
 | `-o, --offset <num>` | Start reading at this byte offset | `0` |
 | `-r, --read-size <num>` | Stop reading after this many bytes | `0` |
 | `-l, --limit <num\|hex>` | Stop at this byte address | EOF |
@@ -185,8 +241,8 @@ cat file.bin | hxed [options]
 | `-p, --pager` | Toggle pager output through `less`/`more` | off |
 | `-e, --entropy` | Toggle Shannon entropy bar per line | off |
 | `-sz, --skip-zero` | Skip all-zero lines | off |
-| `-se, --search <pattern>` | Search `ascii:`, `x:`, `d:`, or `b:` patterns | — |
-| `-ro, --raw` | Raw output (no ANSI, for piping to files) | — |
+| `-se, --search <pattern>` | Search `a:`, `x:`, `d:`, or `b:` patterns | — |
+| `-ro, --raw` | Raw output (no ANSI, for piping to files), use `-w 0` for no newlines| — |
 | `-v, --version` | Show version and exit | — |
 | `-h, --help` | Show help and exit | — |
 
@@ -200,6 +256,7 @@ cat file.bin | hxed [options]
 - Magic byte detection is disabled when `--offset` is set.
 - Search currently works for files, not for `stdin`.
 - When reading from stdin, a filename is not required.
+- If stdin and a filename is given, stdin is ignored.
 
 ---
 
@@ -237,7 +294,7 @@ hxed -o 1k -l 2k sample.bin
 hxed -s image.png
 
 # Search for an ASCII pattern
-hxed -se 'ascii:ABC' sample.bin
+hxed -se 'a:ABC' sample.bin
 
 # Search for a hex pattern
 hxed -se 'x:FF D8 FF' photo.jpg

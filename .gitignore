@@ -1,5 +1,3 @@
 build/
 .vscode
 .cache
-."git_push"
-test/"git_push"

@@ -1,0 +1,249 @@
+.TH HXED 1 "March 2026" "hxed 1.4.1" "User Commands"
+
+.SH NAME
+hxed \- modern hex viewer for binary data
+
+.SH SYNOPSIS
+.B hxed
+.RI [ options ] " [" filename ]
+.br
+cat file.bin |
+.B hxed
+.RI [ options ]
+
+.SH DESCRIPTION
+.B hxed
+is a modern hex viewer for inspecting binary data from files or standard input.
+
+It supports multiple output formats, optional ASCII display, colorized output,
+searching, range-restricted reading, and raw output for scripting and piping.
+
+If both a filename and data from standard input are provided,
+the filename takes precedence.
+
+.SH OPTIONS
+
+.SS Input
+.TP
+.BR \-f , " \-\-file " " <filename>"
+Read input from
+.IR filename .
+Optional if data is provided via standard input.
+
+.SS Display
+.TP
+.BR \-m , " \-\-mode " " <num|'name'>"
+Output mode:
+.RS
+.IP \(bu 2
+0 or
+.B hex
+.IP \(bu 2
+1 or
+.B bin
+.IP \(bu 2
+2 or
+.B oct
+.IP \(bu 2
+3 or
+.B dec
+.RE
+Default is
+.B hex .
+
+.TP
+.BR \-hm , " \-\-heatmap " " <adaptiv|fixed|none>"
+Enable heatmap coloring using 16 colors.
+Disabled automatically if color output is disabled.
+
+.TP
+.BR \-w , " \-\-width " " <num>"
+Number of bytes per line (default: 16).
+A value of
+.B 0
+disables line breaks, but is only valid together with
+.BR --raw .
+
+.TP
+.BR \-g , " \-\-grouping " " <num>"
+Group bytes visually (default: 1).
+A value of
+.B 0
+removes spacing.
+
+.TP
+.BR \-a , " \-\-ascii"
+Toggle ASCII representation column.
+
+.TP
+.BR \-c , " \-\-color"
+Toggle colored output.
+Disabling color also disables heatmap and string highlighting.
+
+.TP
+.BR \-s , " \-\-string"
+Toggle string highlighting.
+
+.TP
+.BR \-e , " \-\-entropy"
+Toggle entropy graph per line.
+
+.TP
+.BR \-th , " \-\-toggle-header"
+Toggle display of header, footer, and magic byte detection.
+
+.TP
+.BR \-sz , " \-\-skip-zero"
+Toggle skipping lines containing only zero bytes.
+
+.SS Read Range
+.TP
+.BR \-o , " \-\-offset " " <num>"
+Start reading at byte offset.
+
+.TP
+.BR \-l , " \-\-limit " " <num>"
+Stop reading at the specified byte position.
+
+.TP
+.BR \-r , " \-\-read-size " " <num>"
+Read at most the specified number of bytes.
+
+.PP
+The options
+.B --limit
+and
+.B --read-size
+are mutually exclusive.
+
+.SS Size Suffixes
+Numeric values for offset, limit, and read-size support suffixes:
+.RS
+.IP \(bu 2
+.B k
+= 1000
+.IP \(bu 2
+.B M
+= 1000000
+.IP \(bu 2
+.B G
+= 1000000000
+.RE
+
+Example:
+.B 10k
+= 10000 bytes.
+
+.SS Search
+.TP
+.BR \-se , " \-\-search " " <pattern>"
+Search for byte patterns and print matching lines only.
+
+Supported formats:
+.RS
+.IP \(bu 2
+.B a:<text>
+.IP \(bu 2
+.B d:<num[,..]>
+(decimal bytes)
+.IP \(bu 2
+.B b:<bits[,..]>
+(binary bytes)
+.IP \(bu 2
+.B x:<hex>
+(hex string or comma-separated values)
+.RE
+
+.SS Output
+.TP
+.BR \-p , " \-\-pager"
+Toggle pager output.
+
+.TP
+.BR \-ro , " \-\-raw"
+Enable raw output mode.
+
+In raw mode:
+.RS
+.IP \(bu 2
+No colors are used
+.IP \(bu 2
+No header or footer is displayed
+.IP \(bu 2
+No addresses are printed
+.IP \(bu 2
+Only formatted values according to the selected mode are output
+.RE
+
+When combined with
+.B --width 0 ,
+all output is printed on a single line.
+
+.SS Information
+.TP
+.BR \-h , " \-\-help"
+Show help and exit.
+
+.TP
+.BR \-v , " \-\-version"
+Show version and exit.
+
+.SH EXAMPLES
+.TP
+.B hxed image.png
+View a file normally.
+
+.TP
+.B hxed -w 32 secret.bin
+Show 32 bytes per line.
+
+.TP
+.B hxed -c file | less -R
+Disable colors and pipe to pager.
+
+.TP
+.B echo 'Hello' | hxed
+Read from standard input.
+
+.TP
+.B hxed -ro -w 0 file > out.txt
+Write raw output without line breaks.
+
+.TP
+.B hxed -se a:Hello file.bin
+Search ASCII text.
+
+.TP
+.B hxed -se x:48656c6c6f file.bin
+Search hex pattern.
+
+.SH NOTES
+.IP \(bu 2
+Offsets and sizes must be positive integers.
+.IP \(bu 2
+Filename takes precedence over standard input.
+.IP \(bu 2
+Invalid combinations of options will abort execution.
+.IP \(bu 2
+Toggle flags invert the default state.
+.IP \(bu 2
+Magic byte detection is disabled when using an offset.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Error.
+
+.SH AUTHOR
+Joshua Jallow
+
+.SH COPYRIGHT
+MIT License.
+
+.SH SEE ALSO
+.BR xxd (1),
+.BR hexdump (1),
+.BR od (1)
