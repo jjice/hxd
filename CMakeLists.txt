@@ -47,3 +47,7 @@ include(GNUInstallDirs)
 install(TARGETS hxed
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+install(FILES man/hxed.1
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+)
