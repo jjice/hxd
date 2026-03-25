@@ -161,8 +161,8 @@ static void parse_hex_search(const char *value, const char *body, options *optio
 }
 
 static void parse_search_argument(const char *value, options *option) {
-    if (strncmp(value, "ascii:", 6) == 0) {
-        parse_ascii_search(value, value + 6, option);
+    if (strncmp(value, "a:", 2) == 0) {
+        parse_ascii_search(value, value + 2, option);
         return;
     }
 
@@ -247,7 +247,7 @@ options *get_options(int argc, char *argv[]) {
         "\n"
         "Search:\n"
         "  -se, --search          <pattern>          Search and print matching lines only\n"
-        "                                              ascii:<text>  | d:<num[,..]>\n"
+        "                                              a:<text>      | d:<num[,..]>\n"
         "                                              b:<bits[,..]> | x:<hex>\n"
         "\n"
         "Output:\n"
@@ -265,7 +265,7 @@ options *get_options(int argc, char *argv[]) {
         "  echo 'Hello World' | hxed          # pipeline to hxed\n"
         "  hxed -w 0 -ro test > o.txt         # raw output without newlines into a file\n"
         "  hxed -s data.bin                   # with string highlighting\n"
-        "  hxed -se ascii:Hello file.bin      # ascii search\n"
+        "  hxed -se a:Hello file.bin          # ascii search\n"
         "  hxed -se x:48656c6c6f file.bin     # hex search\n"
         "  hxed -se b:01001000,01101001 file  # binary byte search\n"
         "  hxed -se d:72,101,108,108,111 file # decimal byte search\n"
@@ -453,7 +453,7 @@ options *get_options(int argc, char *argv[]) {
             option->skip_header = !option->skip_header;
         }
 
-        else if (strcmp(argv[x], "-sz") == 0 || (strcmp(argv[x], "--size") == 0)) {
+        else if (strcmp(argv[x], "-sz") == 0 || (strcmp(argv[x], "--skip-zero") == 0)) {
             // Size flag toggle.
             option->skip_zero = !option->skip_zero;
         }

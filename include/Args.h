@@ -13,9 +13,6 @@
 
 #define MAX_SEARCH_LEN 32
 
-//static unsigned char search[MAX_SEARCH_LEN] = {0};
-//static int search_len = 0; 
-
 // options (no getopt)
 typedef struct {
     char *filename;        // Path to the file to be read.
