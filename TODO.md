@@ -18,6 +18,8 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 
 - [ ] **Comparison Mode**: Side-by-side diffing of two binary files.
 
+- [ ] **Default settings**: Create a setup file to save flag presets
+
 - [ ] **Reverse Mode**: Reverse hex to bin
 
 - [ ] **C-Style Array**: Export output as c-style array
