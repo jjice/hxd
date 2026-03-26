@@ -65,26 +65,21 @@ static inline const char *resolve_byte_color(unsigned char *byte, const display_
     if (option->heatmap == 1) {
         // Scale byte value to range of heatmap colors
         col = heatmap_colors[(int)((b - _min) * 15 / (_max - _min + 1))];
-    } else if (option->heatmap == 2) {
+    } 
+    
+    else if (option->heatmap == 2) {
         col = heatmap_colors[(int)(b / 16)];
-    } else if (option->string) {
+    } 
+    
+    else if (option->string || option->color) {
         if (b >= 32 && b < 127) col = ASCII_COLOR;
         else if (b == 0) col = NULL_BYTE_COLOR;
-        else if (b == 9) col = NON_PRINT_COLOR;
-        else if (b == 10) col = NON_PRINT_COLOR;
-        else if (b == 13) col = NON_PRINT_COLOR;
-        else if (b == 24) col = NON_PRINT_COLOR;
-        else if (b == 26) col = NON_PRINT_COLOR;
-        else if (b == 27) col = NON_PRINT_COLOR;
-        else if (b == 127) col = NON_PRINT_COLOR;
+        else if ((b > 1 && b < 32) || b == 127) col = CONTROL_COLOR;
+        else if (b > 127) col = EXTENDED_ASCII_COLOR;
         else {
-            col = ASCII_COLOR;
+            col = RESET;
             b = 0;
         }
-    } else if (option->color) {
-        if (b == 0) col = NULL_BYTE_COLOR;
-        else if (b >= 32 && b < 127) col = ASCII_COLOR;
-        else col = NON_PRINT_COLOR;
     }
 
     *byte = b;

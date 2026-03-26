@@ -17,26 +17,19 @@
 #define BOLD            "\x1b[1m"
 #define DIM             "\x1b[2m"
 
-// --- Old color set (fallback) ---
-// #define NON_PRINT_COLOR "\x1b[38;5;187m"   // Grey / Bright Black
-// #define NULL_BYTE_COLOR "\x1b[38;5;8m"     // Standard Blau
-// #define ADDR_COLOR      "\x1b[38;5;214m"   // Bright Blue
-// #define ASCII_COLOR     "\x1b[38;5;11m"    // Cyan
-// #define HEADER_COLOR    "\x1b[38;5;222m"   // Bright Yellow
-// #define MAGIC_COLOR     "\x1b[38;5;202m"   // Orange Magic Byte Highlight
-
 // --- Modern neutral color set (dark + light terminal friendly) ---
-#define NON_PRINT_COLOR "\x1b[38;5;153m"     // Neutral gray for control bytes
-#define NULL_BYTE_COLOR "\x1b[38;5;240m"     // Soft gray for null bytes
-#define ADDR_COLOR      "\x1b[38;5;67m"      // Muted steel blue for addresses
-#define ASCII_COLOR     "\x1b[38;5;75m"      // Calm cyan-blue for printable chars
-#define HEADER_COLOR    "\x1b[38;5;110m"     // Soft teal for header / footer
-#define MAGIC_COLOR     "\x1b[38;5;179m"     // Warm amber for magic signatures
-#define BORDER_COLOR    "\x1b[38;5;109m"     // Subtle border / separator color
-#define ANALYSIS_TEXT_COLOR "\x1b[38;5;67m"  // Royal blue for general text
-#define ERROR_COLOR     "\x1b[38;5;160m"     // Bright red for errors
+#define CONTROL_COLOR "\x1b[38;5;153m"          // Neutral gray for control bytes
+#define NULL_BYTE_COLOR "\x1b[38;5;240m"        // Soft gray for null bytes
+#define ADDR_COLOR      "\x1b[38;5;67m"         // Muted steel blue for addresses
+#define ASCII_COLOR     "\x1b[38;5;75m"         // Calm cyan-blue for printable chars
+#define EXTENDED_ASCII_COLOR "\x1b[38;5;110m"   // Soft teal for extended ASCII
+#define HEADER_COLOR    "\x1b[38;5;110m"        // Soft teal for header / footer
+#define MAGIC_COLOR     "\x1b[38;5;179m"        // Warm amber for magic signatures
+#define BORDER_COLOR    "\x1b[38;5;109m"        // Subtle border / separator color
+#define ANALYSIS_TEXT_COLOR "\x1b[38;5;67m"     // Royal blue for general text
+#define ERROR_COLOR     "\x1b[38;5;9m"          // Light red for errors
 
-#define HIGHLIGHT_COLOR "\x1b[1;97;104m"     // Bright white on bright blue background for search highlights]"
+#define HIGHLIGHT_COLOR "\x1b[1;97;104m"        // Orange background with bright white text for highlights
 
 extern const char *heatmap_colors[16];
 
