@@ -69,8 +69,11 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
     char magic_line[1024] = {0};
     size_t magic_pos = 0;
     size_t total_size = analysis->total_bytes;
-    double zero_pct = 0.0;
-
+    
+    float zero_pct = 0.0;
+    float printable_pct = 0.0;
+    float control_pct = 0.0;
+    float extended_pct = 0.0;
     if (!option->pipeline) {
         get_file_metadata(option->filename, &meta);
         if (meta.exists) total_size = meta.file_size;
@@ -79,8 +82,13 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
     }
 
     if (analysis->total_bytes > 0) {
-        zero_pct = ((double)analysis->zero_bytes / (double)analysis->total_bytes) * 100.0;
+        zero_pct = ((float)analysis->zero_bytes / analysis->total_bytes) * 100.0f;
+        printable_pct = ((float)analysis->printable / analysis->total_bytes) * 100.0f;
+        control_pct = ((float)analysis->control / analysis->total_bytes) * 100.0f;
+        extended_pct = ((float)analysis->extended_ascii / analysis->total_bytes) * 100.0f;
     }
+
+    
 
     append_magic_summary(magic_line, sizeof(magic_line), &magic_pos);
 
@@ -92,6 +100,7 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
 
     // ------ Analysis summary line ------
 
+    // summary of found magic byte signatures
     if (option->color) fprintf(out, "%s", HEADER_COLOR);
     fprintf(out, "summary");
 
@@ -103,19 +112,23 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
             analysis->zero_bytes,
             zero_pct,            
             analysis->magic_count);
-
+    
+    // stats        
     if (option->color) fprintf(out, "%s", HEADER_COLOR);
     fprintf(out, "stats");
 
     if (option->color) fprintf(out, "%s", RESET);
-    fprintf(out, "%s    |%s printable %.1f%% ; control %.1f%% ; high-byte %.1f%% ; whitespace %.1f%%\n",
+    fprintf(out, "%s    |%s printable %zu (%.1f%%) ; control %zu (%.1f%%) ; extended %zu (%.1f%%)\n",
             option->color ? BORDER_COLOR : "",
             option->color ? ANALYSIS_TEXT_COLOR : "",
             analysis->printable,
+            printable_pct,
             analysis->control,
-            analysis->high_byte,
-            analysis->whitespace);
+            control_pct,
+            analysis->extended_ascii,
+            extended_pct);
 
+    // magic byte signatures found in the file
     if (analysis->magic_count > 0) {
         if (option->color) fprintf(out, "%s", HEADER_COLOR);
         fprintf(out, "magic");
@@ -126,7 +139,8 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
             option->color ? ANALYSIS_TEXT_COLOR : "",
             magic_line);
     }
-
+    
+    // view options
     if (option->color) fprintf(out, "%s", HEADER_COLOR);
     fprintf(out, "view");
 
@@ -144,7 +158,8 @@ static void print_footer(FILE *out, options *option, int addr_width, const dump_
 
     else fprintf(out, "limit eof");
     fputc('\n', out);
-
+    
+    // time and metadata
     if (!option->pipeline) {
         if (option->color) fprintf(out, "%s", HEADER_COLOR);
         fprintf(out, "time");
@@ -249,11 +264,6 @@ void print_hex(options *option) {
                 line_len = bytes_read - processed;
             }
 
-            for (int i = 0; i < line_len; i++) {
-                if (display_buffer[processed + i] == 0) analysis.zero_bytes++;
-            }
-
-            analysis.total_bytes += (size_t)line_len;
             analysis.line_count++;
 
             render_line(&state, processed, line_len);

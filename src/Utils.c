@@ -7,8 +7,8 @@
 
 #include "Utils.h"
 
+#include <stddef.h>
 #include <string.h>
-#include <ctype.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -135,7 +135,8 @@ bool get_file_metadata(const char *filename, file_metadata *meta) {
     modified.LowPart = attr.ftLastWriteTime.dwLowDateTime;
     modified.HighPart = attr.ftLastWriteTime.dwHighDateTime;
 
-    meta->created_at = (time_t)((created.QuadPart - 116444736000000000ULL) / 10000000ULL);
+    // Convert Windows FILETIME to Unix timestamp (seconds since 1970-01-01)
+    meta->created_at = (time_t)((created.QuadPart - 116444736000000000ULL) / 10000000ULL); 
     meta->modified_at = (time_t)((modified.QuadPart - 116444736000000000ULL) / 10000000ULL);
     meta->has_created = true;
     meta->has_modified = true;
@@ -173,28 +174,20 @@ void analyse(dump_analysis *analysis, unsigned char *data, size_t len) {
 
     for (size_t i = 0; i < len; i++) {
         unsigned char byte = data[i];
-        if (byte == 0) {
-            analysis->zero_bytes++;
-        } else if (byte >= 32 && byte <= 126) {
-            analysis->printable++;
-        } else if (byte <= 31 || byte == 127) {
-            analysis->control++;
-        } else if (byte >= 128) {
-            analysis->high_byte++;
-        }
 
-        if (isspace(byte)) {
-            analysis->whitespace++;
+        if (byte == 0x00) {
+            analysis->zero_bytes++;
+        }
+        else if (byte >= 0x20 && byte <= 0x7E) {
+            analysis->printable++;
+        }
+        else if ((byte <= 0x1F || byte == 0x7F) && byte != 0x00) {
+            analysis->control++;
+        }
+        else if (byte > 0x7F) {
+            analysis->extended_ascii++;
         }
     }
 
     analysis->total_bytes += len;
-
-    if (analysis->total_bytes == 0) return;
-
-    analysis->zero_bytes = analysis->zero_bytes / analysis->total_bytes;
-    analysis->printable = analysis->printable / analysis->total_bytes;
-    analysis->control = analysis->control / analysis->total_bytes;
-    analysis->high_byte = analysis->high_byte / analysis->total_bytes;
-    analysis->whitespace = analysis->whitespace / analysis->total_bytes;
 }

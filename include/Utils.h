@@ -73,10 +73,9 @@ typedef struct {
     size_t zero_bytes;
     size_t line_count;
     int magic_count;
-    float printable;
-    float control;
-    float high_byte;
-    float whitespace;
+    size_t printable;
+    size_t control;
+    size_t extended_ascii;
 } dump_analysis;
 
 bool get_file_metadata(const char *filename, file_metadata *meta);
