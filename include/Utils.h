@@ -29,7 +29,7 @@
 #define ANALYSIS_TEXT_COLOR "\x1b[38;5;67m"     // Royal blue for general text
 #define ERROR_COLOR     "\x1b[38;5;9m"          // Light red for errors
 
-#define HIGHLIGHT_COLOR "\x1b[1;97;104m"        // Orange background with bright white text for highlights
+#define HIGHLIGHT_COLOR "\x1b[1;97;104m"        // Bright blue background with bright white text for highlights
 
 extern const char *heatmap_colors[16];
 
