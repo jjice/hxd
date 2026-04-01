@@ -129,13 +129,6 @@ Pipe-friendly usage keeps it practical in shell workflows where `hexdump` and `x
 
 ### Interactive install scripts
 
-The repository now includes interactive installers that can:
-
-- ask where `hxed` should be installed
-- ask before adding that directory to `PATH`
-- ask whether to build locally or download the latest GitHub release
-- ask whether completions should be installed too
-
 Linux / macOS:
 
 ```bash
