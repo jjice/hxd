@@ -1,3 +1,5 @@
-build/
+build/*
 .vscode
 .cache
+.docs/update_screenshots.sh
+.docs/render_terminal_svg.py

@@ -23,26 +23,6 @@
 #include <linux/stat.h>
 #endif
 
-// --- Previous heatmap set (fallback) ---
-// const char *heatmap_colors[16] = {
-//     "\x1b[38;5;15m",    // 15: System Weiß (Brilliant)
-//     "\x1b[38;5;231m",   // 14: Reinweiß
-//     "\x1b[38;5;230m",   // 13: Fast Weiß (Creme)
-//     "\x1b[38;5;229m",   // 12: Sehr helles Gelb
-//     "\x1b[38;5;228m",   // 11: Pastellgelb
-//     "\x1b[38;5;227m",   // 10: Hellgelb
-//     "\x1b[38;5;226m",   // 9: Reines Gelb
-//     "\x1b[38;5;220m",   // 8: Gelb-Orange
-//     "\x1b[38;5;214m",   // 7: Gold-Orange
-//     "\x1b[38;5;208m",   // 6: Orange
-//     "\x1b[38;5;202m",   // 5: Orangerot
-//     "\x1b[38;5;196m",   // 4: Knallrot
-//     "\x1b[38;5;160m",   // 3: Hellrot
-//     "\x1b[38;5;124m",   // 2: Rot
-//     "\x1b[38;5;88m",    // 1: Dunkelrot
-//     "\x1b[38;5;52m"     // 0: Sehr dunkles Rot (Maroon)
-// };
-
 const char *heatmap_colors[16] = {
     "\x1b[38;5;240m",  // 0  (low)
     "\x1b[38;5;241m",

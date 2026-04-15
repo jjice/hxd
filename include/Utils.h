@@ -18,18 +18,20 @@
 #define DIM             "\x1b[2m"
 
 // --- Modern neutral color set (dark + light terminal friendly) ---
-#define CONTROL_COLOR "\x1b[38;5;153m"          // Neutral gray for control bytes
-#define NULL_BYTE_COLOR "\x1b[38;5;240m"        // Soft gray for null bytes
-#define ADDR_COLOR      "\x1b[38;5;67m"         // Muted steel blue for addresses
-#define ASCII_COLOR     "\x1b[38;5;75m"         // Calm cyan-blue for printable chars
-#define EXTENDED_ASCII_COLOR "\x1b[38;5;110m"   // Soft teal for extended ASCII
-#define HEADER_COLOR    "\x1b[38;5;110m"        // Soft teal for header / footer
-#define MAGIC_COLOR     "\x1b[38;5;179m"        // Warm amber for magic signatures
-#define BORDER_COLOR    "\x1b[38;5;109m"        // Subtle border / separator color
-#define ANALYSIS_TEXT_COLOR "\x1b[38;5;67m"     // Royal blue for general text
-#define ERROR_COLOR     "\x1b[38;5;9m"          // Light red for errors
 
-#define HIGHLIGHT_COLOR "\x1b[1;97;104m"        // Bright blue background with bright white text for highlights
+
+extern char* CONTROL_COLOR;          // Neutral gray for control bytes
+extern char* NULL_BYTE_COLOR;        // Soft gray for null bytes
+extern char* ADDR_COLOR;              // Muted steel blue for addresses
+extern char* ASCII_COLOR;             // Calm cyan-blue for printable chars
+extern char* EXTENDED_ASCII_COLOR;   // Soft teal for extended ASCII
+extern char* HEADER_COLOR;           // Soft teal for header / footer
+extern char* MAGIC_COLOR;            // Warm amber for magic signatures
+extern char* BORDER_COLOR;           // Subtle border / separator color
+extern char* ANALYSIS_TEXT_COLOR;     // Royal blue for general text
+extern char* ERROR_COLOR;              // Light red for errors
+
+extern char* HIGHLIGHT_COLOR;        // Bright blue background with bright white text for highlights
 
 extern const char *heatmap_colors[16];
 

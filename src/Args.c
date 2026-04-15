@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "Args.h"
+#include "Config.h"
 #include "version.h"
 
 // issatty and fileno for Windows compatibility
@@ -214,6 +215,9 @@ options *get_options(int argc, char *argv[]) {
     option->search_len = 0;
     option->pager = false;
     option->raw = false;
+
+    // Apply configuration file settings (before CLI parsing)
+    set_config(option);
 
     // Help message string.
     static const char *help =

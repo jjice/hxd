@@ -54,6 +54,7 @@ If you spend time inspecting binaries, debugging odd files, reversing formats, o
 | ⚡ | **Ultra Flexible** | Custom widths, offsets, and limits for surgical binary inspection |
 | 🌊 | **Pipe Ready** | Seamless `stdin` support with built-in pager integration (`less`/`more`) |
 | 📦 | **Cross-Platform** | Native performance on Linux, macOS, and Windows |
+| 📄 | **Config File** | Configurable default values
 
 ---
 
@@ -97,8 +98,6 @@ Grouping helps separate structured fields quickly when scanning packed binary da
 Fixed heatmap mode gives you a stable 16-step palette across the full byte range, while `adaptiv` remaps the same idea to the actual min/max values in the file.
 
 
-
-
 ### Entropy view &nbsp;·&nbsp; `hxed -e -hm fixed <file>`
 
 <img alt="Entropy output" src=".docs/entrop.svg" width="960">
@@ -127,83 +126,28 @@ Pipe-friendly usage keeps it practical in shell workflows where `hexdump` and `x
 
 ## 🏗️ Build & Install
 
-### Interactive install scripts
+### Windows:
+Use installer (under Releases)
 
-Linux / macOS:
-
-```bash
-chmod +x scripts/install.sh
-./scripts/install.sh
-```
-
-Windows PowerShell:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
-```
-
-Notes:
-- `scripts/install.sh` installs the binary for the current user and can also copy Bash, Zsh, and Fish completions.
-- `scripts/install.ps1` installs `hxed.exe`, can add the install directory to the user `PATH`, and can register the PowerShell completion in your PowerShell profile.
-- The current GitHub release workflow publishes `hxed-linux-x64`, `hxed-windows-x64.exe`, and `hxed-macos-arm64`. On unsupported architectures, the installer falls back to building from source.
-
-### Manual build
+### MacOS / BSD / Linux
 
 **Requirements:** a C compiler (`gcc` or `clang`) and `CMake`.
 
 ```bash
-# Quick build via Makefile
-make
-
-# Or manually with CMake
-cmake -S . -B build
+# Manually with CMake
+cmake -B build
 cmake --build build
-```
 
-### Optional: install system-wide
 
-```bash
-cmake --install build
+# Install systemwide:
+sudo cmake --install build
+
+# Install local
+cmake --install build --prefix ~/.local
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 > **Windows tip:** Add `*/build/bin` to your `PATH` environment variable to use `hxed` from any terminal.
-
-### Manual completion install
-
-If you prefer manual setup, the completion files live in [`completions/`](./completions):
-
-```bash
-# Bash
-mkdir -p ~/.local/share/bash-completion/completions
-cp completions/hxed.bash ~/.local/share/bash-completion/completions/hxed
-
-# Zsh
-mkdir -p ~/.zsh/completions
-cp completions/_hxed ~/.zsh/completions/_hxed
-# add once to ~/.zshrc
-fpath=(~/.zsh/completions $fpath)
-autoload -Uz compinit && compinit
-
-# Fish
-mkdir -p ~/.config/fish/completions
-cp completions/hxed.fish ~/.config/fish/completions/hxed.fish
-```
-
-PowerShell:
-
-```powershell
-. "$PWD\completions\hxed.ps1"
-```
-
-### Uninstall
-
-```bash
-# Linux / macOS
-sudo xargs rm < build/install_manifest.txt
-
-# Windows (PowerShell)
-Get-Content build\install_manifest.txt | Remove-Item
-```
 
 ---
 

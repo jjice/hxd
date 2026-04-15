@@ -38,11 +38,6 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 
 ---
 
-## 🧪 Testing & Quality Assurance
-
-
----
-
 ## ✅ Completed
 - [x] Overhaul CLI argument parsing.
 - [x] Redesign help menu for better readability.
@@ -76,5 +71,3 @@ This document tracks the progress of **hxed**. Key focus areas include performan
 - [x] **Byte Grouping**: Setting for advanced bytegrouping `g`
 - [x] **Advanced Mode**: Octal, decimal, binary
 
-## 🐞 Bugs
-- [ ] hxed.exe -f (file) -l 100 -hm adaptiv : fixed adaptiv heatmap while limit is set
