@@ -298,6 +298,10 @@ static bool set_color_value(char **target, const char *value, const char *key) {
     return true;
 }
 
+#if defined(_WIN32)
+#define strtok_r strtok_s
+#endif
+
 void set_config(options *opt) {
     static bool colors_initialized = false;
 
