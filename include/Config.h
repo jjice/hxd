@@ -22,19 +22,6 @@ color scheme TODO
 */
 
 void set_config(options *opt);
-
-static inline void trim(char *str) {
-    // Trim leading whitespace
-    while (*str && (*str == ' ' || *str == '\t' || *str == '\n' || *str == '\r'))
-        str++;
-
-    // Trim trailing whitespace
-    char *end = str + strlen(str) - 1;
-    while (end > str && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r'))
-        end--;
-
-    // Null-terminate the trimmed string
-    *(end + 1) = '\0';
-}
+void cleanup_colors(void);
 
 #endif // CONFIG_H

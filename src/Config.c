@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <limits.h>
+#include <errno.h>
 
 char* CONTROL_COLOR = NULL;
 char* NULL_BYTE_COLOR = NULL;
@@ -44,7 +46,7 @@ static void init_default_colors(void) {
 }
 
 
-static void cleanup_colors(void) {
+void cleanup_colors(void) {
     free(CONTROL_COLOR); CONTROL_COLOR = NULL;
     free(NULL_BYTE_COLOR); NULL_BYTE_COLOR = NULL;
     free(ADDR_COLOR); ADDR_COLOR = NULL;
@@ -58,23 +60,90 @@ static void cleanup_colors(void) {
     free(HIGHLIGHT_COLOR); HIGHLIGHT_COLOR = NULL;
 }
 
-static bool parse_bool(const char *value) {
-    return (strcmp(value, "true") == 0 || strcmp(value, "yes") == 0 || strcmp(value, "1") == 0);
+static bool parse_bool(const char *value, bool *out) {
+    if (strcmp(value, "true") == 0 || strcmp(value, "yes") == 0 || strcmp(value, "1") == 0) {
+        *out = true;
+        return true;
+    }
+
+    if (strcmp(value, "false") == 0 || strcmp(value, "no") == 0 || strcmp(value, "0") == 0) {
+        *out = false;
+        return true;
+    }
+
+    return false;
 }
 
-static int parse_heatmap(const char *value) {
-    if (strcmp(value, "none") == 0) return 0;
-    if (strcmp(value, "adaptive") == 0) return 1;
-    if (strcmp(value, "fixed") == 0) return 2;
-    return atoi(value); // fallback
+static bool parse_int(const char *value, int *out) {
+    char *end;
+    long result;
+
+    if (value == NULL || *value == '\0') {
+        return false;
+    }
+
+    errno = 0;
+    result = strtol(value, &end, 10);
+
+    if (errno != 0 || end == value || *end != '\0') {
+        return false;
+    }
+
+    if (result < INT_MIN || result > INT_MAX) {
+        return false;
+    }
+
+    *out = (int)result;
+    return true;
 }
 
-static int parse_output_mode(const char *value) {
-    if (strcmp(value, "0") == 0 || strcmp(value, "hex") == 0) return 0;
-    if (strcmp(value, "1") == 0 || strcmp(value, "bin") == 0) return 1;
-    if (strcmp(value, "2") == 0 || strcmp(value, "oct") == 0) return 2;
-    if (strcmp(value, "3") == 0 || strcmp(value, "dec") == 0) return 3;
-    return 0;
+static bool parse_heatmap(const char *value, int *out) {
+    if (strcmp(value, "none") == 0) {
+        *out = 0;
+        return true;
+    }
+
+    if (strcmp(value, "adaptive") == 0) {
+        *out = 1;
+        return true;
+    }
+
+    if (strcmp(value, "fixed") == 0) {
+        *out = 2;
+        return true;
+    }
+
+    if (parse_int(value, out)) {
+        if (*out >= 0 && *out <= 2) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool parse_output_mode(const char *value, int *out) {
+    if (strcmp(value, "0") == 0 || strcmp(value, "hex") == 0) {
+        *out = 0;
+        return true;
+    }
+
+    if (strcmp(value, "1") == 0 || strcmp(value, "bin") == 0) {
+        *out = 1;
+        return true;
+    }
+
+    if (strcmp(value, "2") == 0 || strcmp(value, "oct") == 0) {
+        *out = 2;
+        return true;
+    }
+
+    if (strcmp(value, "3") == 0 || strcmp(value, "dec") == 0) {
+        *out = 3;
+        return true;
+    }
+
+    return false;
 }
 
 static char *config_default = 
@@ -110,15 +179,16 @@ static char *config_default =
     "#ERROR_COLOR=R;G;B\n"
     "#HIGHLIGHT_COLOR=R;G;B"
 ;
-static char *expressions[] = {"output_mode", "heatmap", "width", "grouping",
+
+static char *expressions[] = {
+    "output_mode", "heatmap", "width", "grouping",
     "show_ascii", "show_color", "string", "entropie", "toggle_header",
     "skip_zero", "raw", "CONTROL_COLOR", "NULL_BYTE_COLOR", "ADDR_COLOR",
     "ASCII_COLOR", "EXTENDED_ASCII_COLOR", "HEADER_COLOR", "MAGIC_COLOR",
-    "BORDER_COLOR", "ANALYSIS_TEXT_COLOR", "ERROR_COLOR", "HIGHLIGHT_COLOR"}
-;
+    "BORDER_COLOR", "ANALYSIS_TEXT_COLOR", "ERROR_COLOR", "HIGHLIGHT_COLOR"
+};
 
-
-static inline char *get_config(void) {
+static char *get_config(void) {
     FILE *fconfig = fopen(CONFIG_FILE_NAME, "r");
 
     // Write default file config if it doesn't exist
@@ -165,13 +235,15 @@ static inline char *get_config(void) {
     return out;
 }
 
-static inline void rgb_to_ansi(const char *rgb_str, char *buffer, size_t buffer_size) {
+static void rgb_to_ansi(const char *rgb_str, char *buffer, size_t buffer_size) {
     static const char *format = "\x1b[38;5;%dm";
     int r, g, b;
+
     if (sscanf(rgb_str, "%d;%d;%d", &r, &g, &b) != 3) {
         buffer[0] = '\0';
         return;
     }
+
     r = r < 0 ? 0 : (r > 255 ? 255 : r);
     g = g < 0 ? 0 : (g > 255 ? 255 : g);
     b = b < 0 ? 0 : (b > 255 ? 255 : b);
@@ -181,8 +253,54 @@ static inline void rgb_to_ansi(const char *rgb_str, char *buffer, size_t buffer_
     snprintf(buffer, buffer_size, format, code);
 }
 
+static char *trim(char *str) {
+    char *end;
+
+    if (str == NULL) {
+        return NULL;
+    }
+
+    while (*str == ' ' || *str == '\t' || *str == '\n' || *str == '\r') {
+        str++;
+    }
+
+    if (*str == '\0') {
+        return str;
+    }
+
+    end = str + strlen(str) - 1;
+    while (end > str && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r')) {
+        end--;
+    }
+
+    *(end + 1) = '\0';
+    return str;
+}
+
+static bool set_color_value(char **target, const char *value, const char *key) {
+    char ansi[32];
+    char *new_color;
+
+    rgb_to_ansi(value, ansi, sizeof(ansi));
+    if (ansi[0] == '\0') {
+        fprintf(stderr, "Invalid color value for %s: %s\n", key, value);
+        return false;
+    }
+
+    new_color = strdup(ansi);
+    if (!new_color) {
+        fprintf(stderr, "Memory allocation failed for %s\n", key);
+        return false;
+    }
+
+    free(*target);
+    *target = new_color;
+    return true;
+}
+
 void set_config(options *opt) {
     static bool colors_initialized = false;
+
     if (!colors_initialized) {
         init_default_colors();
         colors_initialized = true;
@@ -197,108 +315,156 @@ void set_config(options *opt) {
     char *saveptr;
     char *line = strtok_r(config_data, "\n", &saveptr);
     while (line != NULL) {
+        char *eq;
+        char *key;
+        char *value;
+        bool found = false;
+        bool bool_value;
+        int int_value;
+
+        line = trim(line);
+
         // Skip comments and empty lines
-        if (line[0] != '#' && line[0] != '\0') {
-            char *eq = strchr(line, '=');
-            if (eq != NULL) {
-                *eq = '\0';
-                char *key = line;
-                char *value = eq + 1;
-                trim(key);
-                trim(value);
+        if (line[0] == '#' || line[0] == '\0') {
+            line = strtok_r(NULL, "\n", &saveptr);
+            continue;
+        }
 
-                bool found = false;
-                for (size_t i = 0; i < sizeof(expressions) / sizeof(expressions[0]); i++) {
-                    if (strcmp(key, expressions[i]) == 0) {
-                        found = true;
+        eq = strchr(line, '=');
+        if (eq == NULL) {
+            line = strtok_r(NULL, "\n", &saveptr);
+            continue;
+        }
 
-                        // Color setting
-                        if (strstr(key, "_COLOR") != NULL) {
-                            char ansi[32];
-                            rgb_to_ansi(value, ansi, sizeof(ansi));
-                            if (ansi[0] != '\0') {
-                                if (strcmp(key, "CONTROL_COLOR") == 0) {
-                                    free(CONTROL_COLOR);
-                                    CONTROL_COLOR = strdup(ansi);
-                                    if (!CONTROL_COLOR) fprintf(stderr, "Memory allocation failed for CONTROL_COLOR\n");
-                                } else if (strcmp(key, "NULL_BYTE_COLOR") == 0) {
-                                    free(NULL_BYTE_COLOR);
-                                    NULL_BYTE_COLOR = strdup(ansi);
-                                    if (!NULL_BYTE_COLOR) fprintf(stderr, "Memory allocation failed for NULL_BYTE_COLOR\n");
-                                } else if (strcmp(key, "ADDR_COLOR") == 0) {
-                                    free(ADDR_COLOR);
-                                    ADDR_COLOR = strdup(ansi);
-                                    if (!ADDR_COLOR) fprintf(stderr, "Memory allocation failed for ADDR_COLOR\n");
-                                } else if (strcmp(key, "ASCII_COLOR") == 0) {
-                                    free(ASCII_COLOR);
-                                    ASCII_COLOR = strdup(ansi);
-                                    if (!ASCII_COLOR) fprintf(stderr, "Memory allocation failed for ASCII_COLOR\n");
-                                } else if (strcmp(key, "EXTENDED_ASCII_COLOR") == 0) {
-                                    free(EXTENDED_ASCII_COLOR);
-                                    EXTENDED_ASCII_COLOR = strdup(ansi);
-                                    if (!EXTENDED_ASCII_COLOR) fprintf(stderr, "Memory allocation failed for EXTENDED_ASCII_COLOR\n");
-                                } else if (strcmp(key, "HEADER_COLOR") == 0) {
-                                    free(HEADER_COLOR);
-                                    HEADER_COLOR = strdup(ansi);
-                                    if (!HEADER_COLOR) fprintf(stderr, "Memory allocation failed for HEADER_COLOR\n");
-                                } else if (strcmp(key, "MAGIC_COLOR") == 0) {
-                                    free(MAGIC_COLOR);
-                                    MAGIC_COLOR = strdup(ansi);
-                                    if (!MAGIC_COLOR) fprintf(stderr, "Memory allocation failed for MAGIC_COLOR\n");
-                                } else if (strcmp(key, "BORDER_COLOR") == 0) {
-                                    free(BORDER_COLOR);
-                                    BORDER_COLOR = strdup(ansi);
-                                    if (!BORDER_COLOR) fprintf(stderr, "Memory allocation failed for BORDER_COLOR\n");
-                                } else if (strcmp(key, "ANALYSIS_TEXT_COLOR") == 0) {
-                                    free(ANALYSIS_TEXT_COLOR);
-                                    ANALYSIS_TEXT_COLOR = strdup(ansi);
-                                    if (!ANALYSIS_TEXT_COLOR) fprintf(stderr, "Memory allocation failed for ANALYSIS_TEXT_COLOR\n");
-                                } else if (strcmp(key, "ERROR_COLOR") == 0) {
-                                    free(ERROR_COLOR);
-                                    ERROR_COLOR = strdup(ansi);
-                                    if (!ERROR_COLOR) fprintf(stderr, "Memory allocation failed for ERROR_COLOR\n");
-                                } else if (strcmp(key, "HIGHLIGHT_COLOR") == 0) {
-                                    free(HIGHLIGHT_COLOR);
-                                    HIGHLIGHT_COLOR = strdup(ansi);
-                                    if (!HIGHLIGHT_COLOR) fprintf(stderr, "Memory allocation failed for HIGHLIGHT_COLOR\n");
-                                }
-                            }
-                        }
+        *eq = '\0';
+        key = trim(line);
+        value = trim(eq + 1);
 
-                        else if (strcmp(key, "heatmap") == 0) {
-                            opt->heatmap = parse_heatmap(value);
-                        }
+        for (size_t i = 0; i < sizeof(expressions) / sizeof(expressions[0]); i++) {
+            if (strcmp(key, expressions[i]) == 0) {
+                found = true;
 
-                        else if (strcmp(key, "output_mode") == 0) {
-                            opt->output_mode = atoi(value);
-                        } else if (strcmp(key, "width") == 0) {
-                            opt->buff_size = atoi(value);
-                        } else if (strcmp(key, "grouping") == 0) {
-                            opt->grouping = atoi(value);
-                        } else if (strcmp(key, "show_ascii") == 0) {
-                            opt->ascii = parse_bool(value);
-                        } else if (strcmp(key, "show_color") == 0) {
-                            opt->color = parse_bool(value);
-                        } else if (strcmp(key, "string") == 0) {
-                            opt->string = parse_bool(value);
-                        } else if (strcmp(key, "entropie") == 0) {
-                            opt->entropie = parse_bool(value);
-                        } else if (strcmp(key, "toggle_header") == 0) {
-                            opt->skip_header = parse_bool(value);
-                        } else if (strcmp(key, "skip_zero") == 0) {
-                            opt->skip_zero = parse_bool(value);
-                        } else if (strcmp(key, "raw") == 0) {
-                            opt->raw = parse_bool(value);
-                        }
-                        break;
+                // Color setting
+                if (strcmp(key, "CONTROL_COLOR") == 0) {
+                    set_color_value(&CONTROL_COLOR, value, key);
+                } else if (strcmp(key, "NULL_BYTE_COLOR") == 0) {
+                    set_color_value(&NULL_BYTE_COLOR, value, key);
+                } else if (strcmp(key, "ADDR_COLOR") == 0) {
+                    set_color_value(&ADDR_COLOR, value, key);
+                } else if (strcmp(key, "ASCII_COLOR") == 0) {
+                    set_color_value(&ASCII_COLOR, value, key);
+                } else if (strcmp(key, "EXTENDED_ASCII_COLOR") == 0) {
+                    set_color_value(&EXTENDED_ASCII_COLOR, value, key);
+                } else if (strcmp(key, "HEADER_COLOR") == 0) {
+                    set_color_value(&HEADER_COLOR, value, key);
+                } else if (strcmp(key, "MAGIC_COLOR") == 0) {
+                    set_color_value(&MAGIC_COLOR, value, key);
+                } else if (strcmp(key, "BORDER_COLOR") == 0) {
+                    set_color_value(&BORDER_COLOR, value, key);
+                } else if (strcmp(key, "ANALYSIS_TEXT_COLOR") == 0) {
+                    set_color_value(&ANALYSIS_TEXT_COLOR, value, key);
+                } else if (strcmp(key, "ERROR_COLOR") == 0) {
+                    set_color_value(&ERROR_COLOR, value, key);
+                } else if (strcmp(key, "HIGHLIGHT_COLOR") == 0) {
+                    set_color_value(&HIGHLIGHT_COLOR, value, key);
+                }
+
+                else if (strcmp(key, "heatmap") == 0) {
+                    if (parse_heatmap(value, &int_value)) {
+                        opt->heatmap = int_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for heatmap: %s\n", value);
                     }
                 }
 
-                if (!found) {
-                    fprintf(stderr, "%s unknown config key\n", key);
+                else if (strcmp(key, "output_mode") == 0) {
+                    if (parse_output_mode(value, &int_value)) {
+                        opt->output_mode = int_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for output_mode: %s\n", value);
+                    }
                 }
+
+                else if (strcmp(key, "width") == 0) {
+                    if (parse_int(value, &int_value)) {
+                        opt->buff_size = int_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for width: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "grouping") == 0) {
+                    if (parse_int(value, &int_value)) {
+                        opt->grouping = int_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for grouping: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "show_ascii") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->ascii = bool_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for show_ascii: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "show_color") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->color = bool_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for show_color: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "string") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->string = bool_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for string: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "entropie") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->entropie = bool_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for entropie: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "toggle_header") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->skip_header = bool_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for toggle_header: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "skip_zero") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->skip_zero = bool_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for skip_zero: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "raw") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->raw = bool_value;
+                    } else {
+                        fprintf(stderr, "Invalid value for raw: %s\n", value);
+                    }
+                }
+
+                break;
             }
         }
+
+        if (!found) {
+            fprintf(stderr, "%s unknown config key\n", key);
+        }
+
         line = strtok_r(NULL, "\n", &saveptr);
     }
 

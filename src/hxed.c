@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "Args.h"
+#include "Config.h"
 #include "Display.h"
 #include "File.h"
 #include "Utils.h"
@@ -38,6 +39,7 @@ int main(int argc, char *argv[]) {
     // 4. Clean up allocated memory for options structure.
     free(option->search);
     free(option);
+    cleanup_colors();
     print_color(RESET, true);
 
     return EXIT_SUCCESS;
