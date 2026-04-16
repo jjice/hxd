@@ -25,6 +25,10 @@ char* ANALYSIS_TEXT_COLOR = NULL;
 char* ERROR_COLOR = NULL;
 char* HIGHLIGHT_COLOR = NULL;
 
+#if defined(_MSC_VER)
+    #define strdup _strdup
+#endif
+
 static void init_default_colors(void) {
     CONTROL_COLOR = strdup("\x1b[38;5;153m");
     NULL_BYTE_COLOR = strdup("\x1b[38;5;240m");
@@ -38,6 +42,7 @@ static void init_default_colors(void) {
     ERROR_COLOR = strdup("\x1b[38;5;9m");
     HIGHLIGHT_COLOR = strdup("\x1b[1;97;104m");
 }
+
 
 static void cleanup_colors(void) {
     free(CONTROL_COLOR); CONTROL_COLOR = NULL;
@@ -53,18 +58,24 @@ static void cleanup_colors(void) {
     free(HIGHLIGHT_COLOR); HIGHLIGHT_COLOR = NULL;
 }
 
-static inline bool parse_bool(const char *value) {
+static bool parse_bool(const char *value) {
     return (strcmp(value, "true") == 0 || strcmp(value, "yes") == 0 || strcmp(value, "1") == 0);
 }
 
-static inline int parse_heatmap(const char *value) {
+static int parse_heatmap(const char *value) {
     if (strcmp(value, "none") == 0) return 0;
     if (strcmp(value, "adaptive") == 0) return 1;
     if (strcmp(value, "fixed") == 0) return 2;
     return atoi(value); // fallback
 }
 
-#define CONFIG_FILE_NAME "hxed.conf"
+static int parse_output_mode(const char *value) {
+    if (strcmp(value, "0") == 0 || strcmp(value, "hex") == 0) return 0;
+    if (strcmp(value, "1") == 0 || strcmp(value, "bin") == 0) return 1;
+    if (strcmp(value, "2") == 0 || strcmp(value, "oct") == 0) return 2;
+    if (strcmp(value, "3") == 0 || strcmp(value, "dec") == 0) return 3;
+    return 0;
+}
 
 static char *config_default = 
     "# this is the default config for hxed\n"
@@ -73,6 +84,7 @@ static char *config_default =
     "# see -h for more information on args.\n"
     "# Default color scheme\n"
     "default_color_scheme=blue\n"
+    "# output modes: see MAN(1) or -h\n"
     "output_mode=0\n"
     "heatmap=none\n"
     "width=16\n"
@@ -98,7 +110,7 @@ static char *config_default =
     "#ERROR_COLOR=R;G;B\n"
     "#HIGHLIGHT_COLOR=R;G;B"
 ;
-char *expressions[] = {"output_mode", "heatmap", "width", "grouping",
+static char *expressions[] = {"output_mode", "heatmap", "width", "grouping",
     "show_ascii", "show_color", "string", "entropie", "toggle_header",
     "skip_zero", "raw", "CONTROL_COLOR", "NULL_BYTE_COLOR", "ADDR_COLOR",
     "ASCII_COLOR", "EXTENDED_ASCII_COLOR", "HEADER_COLOR", "MAGIC_COLOR",

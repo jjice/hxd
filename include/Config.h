@@ -9,39 +9,19 @@
 #define CONFIG_H
 
 #include "Args.h"
-#include "Utils.h"
 
 #include <stdbool.h>
 #include <string.h>
 
 #define IS_CONFIG false
 
-typedef struct {
-    bool enable_color;
-    bool show_offsets;
-    bool show_ascii;
-    bool show_header;
-    bool show_footer;
-    bool show_analysis;
-    bool heatmap_enabled;
-    char *color_scheme;
-} hxed_config;
+#define CONFIG_FILE_NAME "hxed.conf"
 
 /*
-color scheme in utils reinmachen und dann immer nur rgbs reinparsen in escape sachen
+color scheme TODO
 */
 
 void set_config(options *opt);
-
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir_p(path) _mkdir(path)
-#else
-#include <sys/stat.h>
-#define mkdir_p(path) mkdir(path, 0755)
-#endif
-
-#endif
 
 static inline void trim(char *str) {
     // Trim leading whitespace
@@ -56,3 +36,5 @@ static inline void trim(char *str) {
     // Null-terminate the trimmed string
     *(end + 1) = '\0';
 }
+
+#endif // CONFIG_H
