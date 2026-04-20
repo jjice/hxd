@@ -92,6 +92,11 @@ All notable changes to this project will be documented in this file.
 - **Fixes:** Included an additional general bug fix.
 - **Maintenance:** Switched the changelog file to UTF-8 with BOM.
 
+## [1.4.4] - 2026-04-15
+
+### Changed
+- **Fixed:** Minor typo and bugs
+
 ## [1.5.0] - 2026-04-20
 - **Features:** Added default config file with parser
 - **Features:** Added reverse feature
