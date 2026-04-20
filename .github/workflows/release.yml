@@ -20,7 +20,10 @@ jobs:
               sudo apt-get update && sudo apt-get install -y rpm
               cpack -G "DEB;RPM;TGZ"
           - os: windows-latest
-            pkg_cmd: cpack -G "NSIS;ZIP"
+            # Choco installiert NSIS, damit CPack die .exe bauen kann
+            pkg_cmd: |
+              choco install nsis -y
+              cpack -G "NSIS;ZIP"
           - os: macos-latest
             pkg_cmd: cpack -G "DragNDrop;TGZ"
 
@@ -36,12 +39,13 @@ jobs:
         working-directory: build
         run: ${{ matrix.pkg_cmd }}
 
+      # EXTREM WICHTIG: Hier werden die Dateien für den nächsten Job gespeichert
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: packages-${{ matrix.os }}
           path: build/hxed-*.*
-
+          
   create_release:
     name: Bundle & Publish Release
     needs: build_artifacts
