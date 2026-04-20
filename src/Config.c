@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "Args.h"
 #include "Utils.h"
+#include "hxed_config.h.in"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -146,63 +147,20 @@ static bool parse_output_mode(const char *value, int *out) {
     return false;
 }
 
-static char *config_default = 
-    "# this is the default config for hxed\n"
-    "# you can edit this file to change the default settings\n"
-    "# for hxed. If the file doesn't exist, it will be created with these defaults.\n"
-    "# see -h for more information on args.\n"
-    "# Default color scheme\n"
-    "default_color_scheme=blue\n"
-    "# output modes: see MAN(1) or -h\n"
-    "output_mode=0\n"
-    "heatmap=none\n"
-    "width=16\n"
-    "grouping=1\n"
-    "show_ascii=true\n"
-    "show_color=true\n"
-    "string=false\n"
-    "entropie=false\n"
-    "toggle_header=false\n"
-    "skip_zero=false\n"
-    "raw=false\n"
-    "\n\n"
-    "# custom color scheme example\n"
-    "#CONTROL_COLOR=R;G;B\n"
-    "#NULL_BYTE_COLOR=R;G;B\n"
-    "#ADDR_COLOR=R;G;B\n"
-    "#ASCII_COLOR=R;G;B\n"
-    "#EXTENDED_ASCII_COLOR=R;G;B\n"
-    "#HEADER_COLOR=R;G;B\n"
-    "#MAGIC_COLOR=R;G;B\n"
-    "#BORDER_COLOR=R;G;B\n"
-    "#ANALYSIS_TEXT_COLOR=R;G;B\n"
-    "#ERROR_COLOR=R;G;B\n"
-    "#HIGHLIGHT_COLOR=R;G;B"
-;
-
 static char *expressions[] = {
     "output_mode", "heatmap", "width", "grouping",
     "show_ascii", "show_color", "string", "entropie", "toggle_header",
-    "skip_zero", "raw", "CONTROL_COLOR", "NULL_BYTE_COLOR", "ADDR_COLOR",
+    "skip_zero", "raw", "reverse", "CONTROL_COLOR", "NULL_BYTE_COLOR", "ADDR_COLOR",
     "ASCII_COLOR", "EXTENDED_ASCII_COLOR", "HEADER_COLOR", "MAGIC_COLOR",
     "BORDER_COLOR", "ANALYSIS_TEXT_COLOR", "ERROR_COLOR", "HIGHLIGHT_COLOR"
 };
 
 static char *get_config(void) {
-    FILE *fconfig = fopen(CONFIG_FILE_NAME, "r");
+    FILE *fconfig = fopen(CONFIG_FILE_PATH, "r");
 
-    // Write default file config if it doesn't exist
     if (fconfig == NULL) {
-        fconfig = fopen(CONFIG_FILE_NAME, "w");
-        if (fconfig == NULL) {
-            fprintf(stderr, "Could not create hxed.conf\n");
-            return NULL;
-        }
-        else {
-            fwrite(config_default, strlen(config_default), 1, fconfig);
-            fclose(fconfig);
-            return NULL;
-        }
+        fprintf(stderr, "No config file found, using defaults\n");
+        return NULL;
     }
 
     // Read the config file into a buffer
@@ -301,6 +259,25 @@ static bool set_color_value(char **target, const char *value, const char *key) {
 #if defined(_WIN32)
 #define strtok_r strtok_s
 #endif
+
+void print_config(void) {
+    FILE *fconfig = fopen(CONFIG_FILE_PATH, "r");
+
+    if (fconfig == NULL) {
+        fprintf(stderr, "No config file found under %s\n", CONFIG_FILE_PATH);
+        return;
+    }
+
+    printf("Current config from %s:\n\n", CONFIG_FILE_PATH);
+
+    char buffer[1024];
+
+    while (fgets(buffer, sizeof(buffer), fconfig)) {
+        printf("%s", buffer);
+    }
+
+    fclose(fconfig);
+}
 
 void set_config(options *opt) {
     static bool colors_initialized = false;
@@ -458,6 +435,15 @@ void set_config(options *opt) {
                         opt->raw = bool_value;
                     } else {
                         fprintf(stderr, "Invalid value for raw: %s\n", value);
+                    }
+                }
+
+                else if (strcmp(key, "reverse") == 0) {
+                    if (parse_bool(value, &bool_value)) {
+                        opt->reverse_mode = bool_value;
+                        opt->skip_header = true; // Reverse mode implies skipping header analysis
+                    } else {
+                        fprintf(stderr, "Invalid value for reverse: %s\n", value);
                     }
                 }
 

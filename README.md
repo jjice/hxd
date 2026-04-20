@@ -149,6 +149,16 @@ export PATH="$HOME/.local/bin:$PATH"
 
 > **Windows tip:** Add `*/build/bin` to your `PATH` environment variable to use `hxed` from any terminal.
 
+### Uninstall:
+
+```bash
+# when build with ninja (default)
+sudo ninja -C build install
+
+# else (make)
+sudo xargs rm < build/install_manifest.txt
+```
+
 ---
 
 ## 🕹️ Usage

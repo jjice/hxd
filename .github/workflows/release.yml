@@ -9,21 +9,20 @@ permissions:
   contents: write
 
 jobs:
-  build_and_release:
-    name: Build & Release for ${{ matrix.os }}
+  build_artifacts:
+    name: Package for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
-            asset_name: hxed-linux-x64
-            executable: hxed
+            pkg_cmd: |
+              sudo apt-get update && sudo apt-get install -y rpm
+              cpack -G "DEB;RPM;TGZ"
           - os: windows-latest
-            asset_name: hxed-windows-x64.exe
-            executable: hxed.exe
+            pkg_cmd: cpack -G "NSIS;ZIP"
           - os: macos-latest
-            asset_name: hxed-macos-arm64
-            executable: hxed
+            pkg_cmd: cpack -G "DragNDrop;TGZ"
 
     steps:
       - uses: actions/checkout@v4
@@ -33,26 +32,69 @@ jobs:
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
 
-      - name: Prepare Artifact
+      - name: Create Packages
+        working-directory: build
+        run: ${{ matrix.pkg_cmd }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.os }}
+          path: build/hxed-*.*
+
+  create_release:
+    name: Bundle & Publish Release
+    needs: build_artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-packages
+          merge-multiple: true
+
+      - name: Prepare Detailed Release Notes
+        id: notes
         shell: bash
         run: |
-          # Wir suchen im neuen 'bin' Ordner, den dein CMake erstellt hat
-          if [ -f "build/bin/${{ matrix.executable }}" ]; then
-            cp "build/bin/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
-          elif [ -f "build/bin/Release/${{ matrix.executable }}" ]; then
-            cp "build/bin/Release/${{ matrix.executable }}" "./${{ matrix.asset_name }}"
-          else
-            echo "❌ ERROR: ${{ matrix.executable }} wurde nicht in build/bin gefunden!"
-            ls -R build
-            exit 1
-          fi
-          echo "✅ File successfully copied to: ./${{ matrix.asset_name }}"
 
-      - name: Release
+          TAG_NAME=${{ github.ref_name }}
+          VERSION_CLEAN=${TAG_NAME#v}
+          
+
+          sed -n "/## \[$VERSION_CLEAN\]/,/## /p" CHANGELOG.md | sed '$d' > body.md
+          
+
+          echo -e "\n## SHA256 Checksums\n\`\`\`" >> body.md
+          cd all-packages
+          sha256sum hxed-* >> ../body.md
+          cd ..
+          echo -e "\`\`\`\n" >> body.md
+          
+
+          {
+            echo "## Installation Assets"
+            echo -e "\n### Linux"
+            echo "- Debian/Ubuntu: \`hxed-$VERSION_CLEAN-Linux.deb\`"
+            echo "- Fedora/RHEL/Arch: \`hxed-$VERSION_CLEAN-Linux.rpm\`"
+            echo "- Generic: \`hxed-$VERSION_CLEAN-Linux.tar.gz\`"
+            
+            echo -e "\n### Windows"
+            echo "- Installer: \`hxed-$VERSION_CLEAN-win64.exe\`"
+            echo "- Portable: \`hxed-$VERSION_CLEAN-win64.zip\`"
+            
+            echo -e "\n### MacOS"
+            echo "- Disk Image: \`hxed-$VERSION_CLEAN-Darwin.dmg\`"
+            echo "- Portable: \`hxed-$VERSION_CLEAN-Darwin.tar.gz\`"
+          } >> body.md
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ matrix.asset_name }}
-          generate_release_notes: true
+          body_path: body.md
+          files: all-packages/*
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

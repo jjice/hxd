@@ -21,20 +21,20 @@ int main(int argc, char *argv[]) {
     // Enable ANSI escape code processing on Windows 10
     // and later for colored output in the console. (optional on terminal-app)
     #ifdef _WIN32
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD dwMode = 0;
-    GetConsoleMode(hOut, &dwMode);
-    SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD dwMode = 0;
+        GetConsoleMode(hOut, &dwMode);
+        SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     #endif
 
-    // 1. Parse command line arguments.
+    // 1. Parse command line arguments and default configs (config_file)
     options *option = get_options(argc, argv);
 
     // 2. Perform initial file existence and emptiness checks.
     check_file(option);
 
     // 3. Execute the hex dump logic.
-    print_hex(option);
+    print_output(option);
 
     // 4. Clean up allocated memory for options structure.
     free(option->search);

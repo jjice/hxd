@@ -6,7 +6,7 @@ _hxed()
     _init_completion -n = || return
 
     local opts modes heatmaps
-    opts="-f --file -m --mode -hm --heatmap -w --width -g --grouping -a --ascii -c --color -s --string -e --entropy -th --toggle-header -sz --skip-zero -o --offset -l --limit -r --read-size -se --search -p --pager -ro --raw -h --help -v --version"
+    opts="-f --file -m --mode -hm --heatmap -w --width -g --grouping -a --ascii -c --color -s --string -e --entropy -th --toggle-header -sz --skip-zero -re --reverse -o --offset -l --limit -r --read-size -se --search -p --pager -ro --raw --show-config -h --help -v --version"
     modes="0 1 2 3 hex bin oct dec"
     heatmaps="adaptiv fixed none"
 

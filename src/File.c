@@ -76,6 +76,13 @@ void check_file(options *option) {
             exit(EXIT_FAILURE);
         }
 
+        // Reverse mode interprets decoded bytes from textual input. Range checks
+        // must happen after decoding, not against encoded file size.
+        if (option->reverse_mode) {
+            fclose(fp);
+            return;
+        }
+
         // Ceck if filesize is in range of limit
         if (file_size < option->limit_read) {
             printf("Filesize is out of range, check limit | keep empty for EOF");

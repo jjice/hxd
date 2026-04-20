@@ -9,19 +9,23 @@
 #define CONFIG_H
 
 #include "Args.h"
+#include "hxed_config.h"
 
 #include <stdbool.h>
-#include <string.h>
 
 #define IS_CONFIG false
-
 #define CONFIG_FILE_NAME "hxed.conf"
 
-/*
-color scheme TODO
-*/
+#ifdef _WIN32
+#define CONFIG_FILE_PATH GLOBAL_CONFIG_DIR "\\" CONFIG_FILE_NAME
+
+#else
+#define CONFIG_FILE_PATH GLOBAL_CONFIG_DIR "/" CONFIG_FILE_NAME
+
+#endif
 
 void set_config(options *opt);
+void print_config(void);
 void cleanup_colors(void);
 
 #endif // CONFIG_H

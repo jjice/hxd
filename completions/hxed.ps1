@@ -15,12 +15,14 @@ Register-ArgumentCompleter -CommandName hxed -ScriptBlock {
         "-e","--entropy",
         "-th","--toggle-header",
         "-sz","--skip-zero",
+        "-re","--reverse",
         "-o","--offset",
         "-l","--limit",
         "-r","--read-size",
         "-se","--search",
         "-p","--pager",
         "-ro","--raw",
+        "--show-config",
         "-h","--help",
         "-v","--version"
     )

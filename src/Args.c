@@ -13,7 +13,7 @@
 #include <errno.h>
 #include "Args.h"
 #include "Config.h"
-#include "version.h"
+#include "hxed_config.h"
 
 // issatty and fileno for Windows compatibility
 #ifdef _WIN32
@@ -208,6 +208,7 @@ options *get_options(int argc, char *argv[]) {
     option->entropie = false;
     option->skip_header = false;
     option->skip_zero = false;
+    option->reverse_mode = false;
     option->offset_read = 0;
     option->limit_read = 0;
     option->read_size = 0;
@@ -233,16 +234,18 @@ options *get_options(int argc, char *argv[]) {
         "  -f,  --file            <filename>         Input file (optional if data comes from stdin)\n"
         "\n"
         "Display:\n"
-        "  -m,  --mode            <num|'name'>       Output mode (0 = hex, 1 = bin, 2 = oct, 3 = dec) (default: 0|hex)\n"
-        "  -hm, --heatmap         <adaptiv|fixed|none> Show colors as heatmap with 16 colors (default: none)\n"
-        "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line)\n"
-        "  -g,  --grouping        <num>              Grouping size (default: 1, 0 = no spaces)\n"
+        "  -m,  --mode            <num|'name'>       Output mode (default 0|hex) [0 = hex, 1 = bin, 2 = oct, 3 = dec]\n"
+        "  -hm, --heatmap         <adaptiv|fixed>    Show colors as heatmap with 16 colors (default: none)\n"
+        "  -w,  --width           <num>              Bytes per line (default: 16) (0 -> no new line) [128 max]\n"
+        "  -g,  --grouping        <num>              Grouping size (default: 1, 0 = no spaces) [128 max]\n"
         "  -a,  --ascii                              Toggle ASCII representation column (default: on)\n"
         "  -c,  --color                              Toggle syntax highlighting / colors (default: on)\n"
         "  -s,  --string                             Toggle string highlighting (default: off)\n"
         "  -e,  --entropy                            Toggle entropy graph per line (default: off)\n"
         "  -th, --toggle-header                      Toggle header, footer and magic byte detection (default: on)\n"
         "  -sz, --skip-zero                          Toggle skip-zero lines (default: off)\n"
+        "  -re, --reverse                            Custom input to ascii output\n"
+        "                                            (must use with -m to specify input mode, default: hex)\n"        
         "\n"
         "Read Range:\n"
         "  -o,  --offset          <num>              Start reading at this byte offset (default: 0)\n"
@@ -253,13 +256,14 @@ options *get_options(int argc, char *argv[]) {
         "  -se, --search          <pattern>          Search and print matching lines only\n"
         "                                              a:'some text'   | d:2,4,51\n"
         "                                              b:00100000,...  | x:48656c6c6f\n"
-        "                                            HINT: For num, bits and hex no whitespace!\n"
+        "                                            HINT: For num, bits and hex no whitespaces!\n"
         "\n"
         "Output:\n"
         "  -p,  --pager                              Toggle pager output (default: off)\n"
         "  -ro, --raw                                Raw output to console | file (pipe)\n"
         "\n"
         "Info:\n"
+        "       --show-config                        Show current config and exit\n"
         "  -h,  --help                               Show this help message and exit\n"
         "  -v,  --version                            Show version information and exit\n"
         "\n"
@@ -270,7 +274,7 @@ options *get_options(int argc, char *argv[]) {
         "  echo 'Hello World' | hxed          # pipeline to hxed\n"
         "  hxed -w 0 -ro test > o.txt         # raw output without newlines into a file\n"
         "  hxed -s data.bin                   # with string highlighting\n"
-        "  hxed -se a:'Hello file'.bin          # ascii search\n"
+        "  hxed -se a:'Hello file'.bin        # ascii search\n"
         "  hxed -se x:48656c6c6f file.bin     # hex search\n"
         "  hxed -se b:01001000,01101001 file  # binary byte search\n"
         "  hxed -se d:72,101,108,108,111 file # decimal byte search\n"
@@ -279,7 +283,7 @@ options *get_options(int argc, char *argv[]) {
         "  * Offsets and limits must be positive integers.\n"
         "  * Magic byte detection is inactive if offset is set\n"
         "  * --offset and --limit cannot be combined in a way that limit < offset.\n"
-        "  * When reading from stdin (pipe), filename is not required.\n"
+        "  * Only reading from file OR stdin (pipe) is supported.\n"
         "  * Toggle flags flip the current default state.\n"
         "\n";
 
@@ -463,6 +467,11 @@ options *get_options(int argc, char *argv[]) {
             option->skip_zero = !option->skip_zero;
         }
 
+        else if (strcmp(argv[x], "-re") == 0 || (strcmp(argv[x], "--reverse") == 0)) {
+            // Reverse flag toggle.
+            option->reverse_mode = !option->reverse_mode;
+        }
+
         else if (strcmp(argv[x], "-o") == 0 || (strcmp(argv[x], "--offset") == 0)) {
             // Offset Flag
             if (x + 1 >= argc) {
@@ -643,6 +652,12 @@ options *get_options(int argc, char *argv[]) {
             // Pager flag toggle.
             option->pager = !option->pager;
         }
+        
+        else if (strcmp(argv[x], "--show-config") == 0) {
+            // Config flag.
+            print_config();
+            exit(EXIT_SUCCESS);
+        }
 
         else if (strcmp(argv[x], "-h") == 0 || (strcmp(argv[x], "--help") == 0)) {
             // Help flag.
@@ -652,7 +667,7 @@ options *get_options(int argc, char *argv[]) {
 
         else if (strcmp(argv[x], "-v") == 0 || (strcmp(argv[x], "--version") == 0)) {
             // Help flag.
-            printf("%s", HXED_VERSION);
+            printf("%s", HXED_VERSION_STR);
             exit(EXIT_SUCCESS);
         }
 

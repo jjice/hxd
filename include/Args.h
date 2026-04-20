@@ -27,6 +27,7 @@ typedef struct {
     bool entropie;         // Future options: -e, --entropy to show entropy graph per line
     bool skip_header;      // Flag to determine if header will be skipped
     bool skip_zero;        // Flag to determine if lines with only zero bytes should be skipped
+    bool reverse_mode;     // Flag to determine if output should be reversed (e.g., hex input to ascii output)
     size_t offset_read;    // Bytes to skip until print
     size_t limit_read;     // Byte to stop reading
     size_t read_size;      // Bytes to read

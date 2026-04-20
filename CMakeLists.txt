@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
+project(hxed LANGUAGES C VERSION 1.5.0)
 
-project(hxed LANGUAGES C VERSION 1.4.3)
+include(GNUInstallDirs)
+
+if(WIN32)
+    set(GLOBAL_CONFIG_DIR ".") 
+else()
+    # Using /etc/hxed oder <prefix>/etc/hxed
+    set(GLOBAL_CONFIG_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/hxed")
+endif()
 
 configure_file(
-    "${PROJECT_SOURCE_DIR}/include/version.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/version.h"
+    "${PROJECT_SOURCE_DIR}/include/hxed_config.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/hxed_config.h"
+    @ONLY
 )
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -45,39 +54,47 @@ else()
     )
 endif()
 
-include(GNUInstallDirs)
-
 install(TARGETS hxed
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if (UNIX)
+    # Manpages
     install(FILES man/hxed.1
         DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
     )
 
+    # Bash
     install(
         FILES completions/hxed.bash
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/bash-completion/completions
         RENAME hxed
     )
 
+    # Fish
     install(
         FILES completions/hxed.fish
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/fish/vendor_completions.d
     )
 
+    # Zsh
     install(
         FILES completions/hxed.zsh
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/zsh/site-functions
         RENAME _hxed
     )
 
+    # Config-File (Global)
+    install(
+        FILES misc/hxed.conf
+        DESTINATION ${GLOBAL_CONFIG_DIR}
+    )
+
+    # ZSH Hints
     install(CODE "
-        if(NOT \"\${CMAKE_INSTALL_PREFIX}\" MATCHES \"^/usr\")
-            message(STATUS \"--- Note ---\")
-            message(STATUS \"Zsh completion installed to \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR}/zsh/site-functions\")
-            message(STATUS \"If it's not working, add this to your ~/.zshrc:\")
+        if(NOT \"\${CMAKE_INSTALL_PREFIX}\" MATCHES \"^/usr$\")
+            message(STATUS \"--- Zsh Completion Note ---\")
+            message(STATUS \"Add this to your ~/.zshrc if completion fails:\")
             message(STATUS \"  fpath=(\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR}/zsh/site-functions \\\$fpath)\")
             message(STATUS \"  autoload -Uz compinit && compinit\")
         endif()
@@ -85,18 +102,25 @@ if (UNIX)
 endif()
 
 if (WIN32)
-    set(PS_DEST "${CMAKE_INSTALL_DATAROOTDIR}/powershell/hxed.ps1")
+    set(PS_REL_PATH "${CMAKE_INSTALL_DATAROOTDIR}/powershell/hxed.ps1")
     
     install(
         FILES completions/hxed.ps1
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/powershell
     )
 
-    # Hinweis für Windows-Nutzer
+    install(
+        FILES misc/hxed.conf
+        DESTINATION ${GLOBAL_CONFIG_DIR}
+    )
+
     install(CODE "
+        file(TO_NATIVE_PATH \"\${CMAKE_INSTALL_PREFIX}/${PS_REL_PATH}\" PS_NATIVE_PATH)
+        # Backslashes für PowerShell escapen
+        string(REPLACE \"\\\\\" \"/\" PS_NATIVE_PATH \"\${PS_NATIVE_PATH}\")
         message(STATUS \"--- PowerShell Completion Note ---\")
-        message(STATUS \"To enable autocompletion, add the following line to your \$PROFILE:\")
-        message(STATUS \"  . \\\"\${CMAKE_INSTALL_PREFIX}/${PS_DEST}\\\"\")
+        message(STATUS \"To enable autocompletion, add this to your \$PROFILE:\")
+        message(STATUS \"  . \\\"\${PS_NATIVE_PATH}\\\"\")
     ")
 endif()
 
@@ -136,5 +160,7 @@ else()
     set(CPACK_RPM_PACKAGE_RELEASE 1)
     set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 endif()
+
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
 
 include(CPack)

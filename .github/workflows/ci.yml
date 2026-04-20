@@ -23,7 +23,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Abhängigkeiten installieren (Nur auf Linux-Systemen)
+
     - name: Install Dependencies (Linux/Arch)
       if: runner.os == 'Linux'
       run: |
@@ -33,28 +33,14 @@ jobs:
           sudo apt-get update && sudo apt-get install -y build-essential cmake
         fi
 
-    # Konfigurieren (Plattformunabhängig über CMake)
+
     - name: Configure CMake
       run: cmake -B build -S .
 
-    # Build (Plattformunabhängig über CMake)
+
     - name: Build
       run: cmake --build build --config Release
 
-    # Test-Schritt mit korrekten Pfaden
-    - name: Run Basic Test
-      shell: bash
-      run: |
-        # Wir suchen rekursiv im build-Ordner nach der hxed Datei
-        # und machen sie ausführbar (wichtig für Linux/macOS)
-        TARGET=$(find build -name "hxed" -o -name "hxed.exe" | head -n 1)
-        
-        if [ -z "$TARGET" ]; then
-          echo "FEHLER: hxed wurde nirgendwo im build-Ordner gefunden!"
-          ls -R build
-          exit 1
-        fi
-        
-        echo "Gefundene Datei: $TARGET"
-        chmod +x "$TARGET"
-        "$TARGET" --help
+    - name: Run Tests
+      working-directory: build
+      run: ctest --output-on-failure -C Release

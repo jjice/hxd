@@ -1,22 +1,22 @@
-.TH HXED 1 "March 2026" "hxed 1.4.X" "User Commands"
+.TH HXED 1 "March 2026" "hxed" "User Commands"
 
 .SH NAME
-hxed \- modern hex viewer for binary data
+hxed \- modern hex viewer for binary data analysis
 
 .SH SYNOPSIS
 .B hxed
-.RI [ options ] " [" filename ]
+[\fIOPTIONS\fR] [\fIFILENAME\fR]
 .br
-cat file.bin |
 .B hxed
-.RI [ options ]
+.B \-h 
+| 
+.B \-v
 
 .SH DESCRIPTION
 .B hxed
-is a modern hex viewer for inspecting binary data from files or standard input.
-
-It supports multiple output formats, optional ASCII display, colorized output,
-searching, range-restricted reading, and raw output for scripting and piping.
+is a modern hex viewer designed for inspecting binary data from files or standard input.
+It features high-performance rendering, colorized heatmaps, and entropy analysis
+to help identify patterns and data structures in binary blobs.
 
 If both a filename and data from standard input are provided,
 the filename takes precedence.
@@ -25,228 +25,192 @@ the filename takes precedence.
 
 .SS Input
 .TP
-.BR \-f , " \-\-file " " <filename>"
-Read input from
-.IR filename .
-Optional if data is provided via standard input.
+.BR \-f , " \-\-file " \fI<filename>\fR
+Read input from \fIfilename\fR. Optional if data is provided via standard input.
 
 .SS Display
 .TP
-.BR \-m , " \-\-mode " " <num|'name'>"
-Output mode:
+.BR \-m , " \-\-mode " \fI<num|'name'>\fR
+Select output mode:
 .RS
 .IP \(bu 2
-0 or
-.B hex
+0 or \fBhex\fR (Hexadecimal)
 .IP \(bu 2
-1 or
-.B bin
+1 or \fBbin\fR (Binary)
 .IP \(bu 2
-2 or
-.B oct
+2 or \fBoct\fR (Octal)
 .IP \(bu 2
-3 or
-.B dec
+3 or \fBdec\fR (Decimal)
 .RE
-Default is
-.B hex .
+Default is \fBhex\fR.
 
 .TP
-.BR \-hm , " \-\-heatmap " " <adaptiv|fixed|none>"
-Enable heatmap coloring using 16 colors.
+.BR \-hm , " \-\-heatmap " \fI<adaptive|fixed|none>\fR
+Enable heatmap coloring based on byte values using 16 colors. 
+.I adaptive
+scales colors to the file's byte range, while \fIfixed\fR uses the full 0-255 range.
 Disabled automatically if color output is disabled.
 
 .TP
-.BR \-w , " \-\-width " " <num>"
+.BR \-w , " \-\-width " \fI<num>\fR
 Number of bytes per line (default: 16).
-A value of
-.B 0
-disables line breaks, but is only valid together with
-.BR --raw .
+A value of \fB0\fR disables line breaks (only valid with \fB\-\-raw\fR).
 
 .TP
-.BR \-g , " \-\-grouping " " <num>"
-Group bytes visually (default: 1).
-A value of
-.B 0
-removes spacing.
+.BR \-g , " \-\-grouping " \fI<num>\fR
+Group bytes visually (default: 1). A value of \fB0\fR removes all spacing.
 
 .TP
 .BR \-a , " \-\-ascii"
-Toggle ASCII representation column.
+Toggle the ASCII representation column.
 
 .TP
 .BR \-c , " \-\-color"
-Toggle colored output.
-Disabling color also disables heatmap and string highlighting.
+Toggle colored output. Disabling color also disables heatmap and string highlighting.
 
 .TP
 .BR \-s , " \-\-string"
-Toggle string highlighting.
+Highlight printable ASCII strings within the hex view.
 
 .TP
 .BR \-e , " \-\-entropy"
-Toggle entropy graph per line.
+Display Shannon entropy per line to identify compressed or encrypted data.
 
 .TP
-.BR \-th , " \-\-toggle-header"
-Toggle display of header, footer, and magic byte detection.
+.BR \-th , " \-\-toggle\-header"
+Toggle the display of the header, footer, and magic byte detection.
 
 .TP
-.BR \-sz , " \-\-skip-zero"
-Toggle skipping lines containing only zero bytes.
+.BR \-sz , " \-\-skip\-zero"
+Skip lines containing only zero bytes (\fB00\fR).
+
+.TP
+.BR \-re , " \-\-reverse"
+Enable reverse mode: interpret numeric input as bytes and output raw ASCII.
+The input format is defined by \fB\-m\fR.
+
+.SS Reverse Mode Details
+Input tokens can be separated by whitespace, commas (\fB,\fR), semicolons (\fB;\fR), colons (\fB:\fR), or pipes (\fB|\fR).
+In \fBhex\fR and \fBbin\fR modes, separators are ignored for a continuous stream.
+In \fBoct\fR and \fBdec\fR modes, explicit separation is required unless octal 
+input uses fixed 3-digit groups.
+
+.TP
+.BR \-ra
+When used with \fB\-\-raw\fR, produces raw ASCII output from numeric input.
 
 .SS Read Range
 .TP
-.BR \-o , " \-\-offset " " <num>"
-Start reading at byte offset.
+.BR \-o , " \-\-offset " \fI<num>\fR
+Start reading at byte offset. Magic byte detection is disabled when an offset is used.
 
 .TP
-.BR \-l , " \-\-limit " " <num>"
-Stop reading at the specified byte position.
+.BR \-\-limit \fI<num>\fR
+Stop reading at the specified absolute byte position.
 
 .TP
-.BR \-r , " \-\-read-size " " <num>"
-Read at most the specified number of bytes.
-
-.PP
-The options
-.B --limit
-and
-.B --read-size
+.BR \-r , " \-\-read\-size " \fI<num>\fR
+Read at most \fInum\fR bytes. 
+.B \-\-limit
+and 
+.B \-\-read\-size
 are mutually exclusive.
 
 .SS Size Suffixes
-Numeric values for offset, limit, and read-size support suffixes:
+Numeric values for offset, limit, and read-size support decimal suffixes:
 .RS
 .IP \(bu 2
 .B k
-= 1000
+= 1,000 bytes
 .IP \(bu 2
 .B M
-= 1000000
+= 1,000,000 bytes
 .IP \(bu 2
 .B G
-= 1000000000
+= 1,000,000,000 bytes
 .RE
-
-Example:
-.B 10k
-= 10000 bytes.
 
 .SS Search
 .TP
-.BR \-se , " \-\-search " " <pattern>"
-Search for byte patterns and print matching lines only.
-
-Supported formats:
+.BR \-se , " \-\-search " \fI<pattern>\fR
+Search for patterns and print matching lines. Supported prefixes:
 .RS
 .IP \(bu 2
-.B a:<text>
+\fBa:<text>\fR (ASCII)
 .IP \(bu 2
-.B d:<num[,..]>
-(decimal bytes)
+\fBd:<n,n>\fR (Decimal bytes)
 .IP \(bu 2
-.B b:<bits[,..]>
-(binary bytes)
+\fBb:<bits>\fR (Binary)
 .IP \(bu 2
-.B x:<hex>
-(hex string or comma-separated values)
+\fBx:<hex>\fR (Hex string)
 .RE
 
 .SS Output
 .TP
 .BR \-p , " \-\-pager"
-Toggle pager output.
+Pipe output through the system pager (e.g., \fI$PAGER\fR or \fIless\fR).
 
 .TP
 .BR \-ro , " \-\-raw"
-Enable raw output mode.
+Enable raw output mode. This removes addresses, headers, footers, and colors.
 
-In raw mode:
-.RS
-.IP \(bu 2
-No colors are used
-.IP \(bu 2
-No header or footer is displayed
-.IP \(bu 2
-No addresses are printed
-.IP \(bu 2
-Only formatted values according to the selected mode are output
-.RE
+.SH INFORMATION
+.TP
+.BR \-\-show\-config
+Show current configuration file path and active values, then exit.
 
-When combined with
-.B --width 0 ,
-all output is printed on a single line.
-
-.SS Information
 .TP
 .BR \-h , " \-\-help"
-Show help and exit.
+Display help and exit.
 
 .TP
 .BR \-v , " \-\-version"
-Show version and exit.
+Display version information and exit.
+
+.SH FILES
+.TP
+.I ~/.config/hxed/hxed.conf
+Standard location for the user-specific configuration file.
+.TP
+.I /etc/hxed.conf
+Global configuration file (location may vary depending on the 
+.B CMAKE_INSTALL_PREFIX
+used during compilation).
+.PP
+Since the configuration path depends on the installation method and 
+operating system, use:
+.RS
+.B hxed --show-config
+.RE
+to display the exact path currently used by the executable.
+
+.SH ENVIRONMENT
+.TP
+.B PAGER
+The pager used when \fB\-p\fR is specified. Falls back to \fIless\fR if unset. (more on windows)
+.TP
+.B NO_COLOR
+If set, disables color output by default.
 
 .SH EXAMPLES
 .TP
 .B hxed image.png
-View a file normally.
-
+Standard view of a file.
 .TP
-.B hxed -w 32 secret.bin
-Show 32 bytes per line.
-
+.B hxed \-ro \-w 0 file > out.txt
+Dump file as a single line of hex values to a text file.
 .TP
-.B hxed -c file | less -R
-Disable colors and pipe to pager.
-
-.TP
-.B echo 'Hello' | hxed
-Read from standard input.
-
-.TP
-.B hxed -ro -w 0 file > out.txt
-Write raw output without line breaks.
-
-.TP
-.B hxed -se a:Hello file.bin
-Search ASCII text.
-
-.TP
-.B hxed -se x:48656c6c6f file.bin
-Search hex pattern.
-
-.SH NOTES
-.IP \(bu 2
-Offsets and sizes must be positive integers.
-.IP \(bu 2
-Filename takes precedence over standard input.
-.IP \(bu 2
-Invalid combinations of options will abort execution.
-.IP \(bu 2
-Toggle flags invert the default state.
-.IP \(bu 2
-Magic byte detection is disabled when using an offset.
-.IP \(bu 2
-Zero Range: 0
-.IP \(bu 2
-Control Range: 1 - 31 & 127
-.IP \(bu 2
-ASCII Range: 32 - 126
-.IP \(bu 2
-Extended Range: 128 - 255
+.B printf '48656c6c' | hxed \-re \-m 0
+Convert hex string back to "Hell".
 
 .SH EXIT STATUS
-.TP
-.B 0
+.IP 0 2
 Success.
-.TP
-.B 1
-Error.
+.IP 1 2
+General error.
 
 .SH AUTHOR
-Joshua Jallow
+Joshua Jallow (pm: @github/jjice)
 
 .SH COPYRIGHT
 MIT License.

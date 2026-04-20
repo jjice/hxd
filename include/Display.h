@@ -10,6 +10,6 @@
 
 #include "Args.h"
 
-void print_hex(options *option);
+void print_output(options *option);
 
 #endif

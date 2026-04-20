@@ -91,3 +91,12 @@ All notable changes to this project will be documented in this file.
 - **Fixes:** Fixed adaptive heatmap behavior by applying it per line instead of per file.
 - **Fixes:** Included an additional general bug fix.
 - **Maintenance:** Switched the changelog file to UTF-8 with BOM.
+
+## [1.5.0] - 2026-04-20
+- **Features:** Added default config file with parser
+- **Features:** Added reverse feature
+- **Features:** Added CPack (Windows installer)
+- **Fixes:** Improved CMakeLists
+- **Fixes:** Fixed type and bugs in completions
+- **Fixes:** Fixed minor bugs
+- **Maintenance:** Update MAN page
