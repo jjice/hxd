@@ -87,7 +87,7 @@ if (UNIX)
     # Config-File (Global)
     install(
         FILES misc/hxed.conf
-        DESTINATION ${GLOBAL_CONFIG_DIR}
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/hxed
     )
 
     # ZSH Hints
@@ -111,7 +111,7 @@ if (WIN32)
 
     install(
         FILES misc/hxed.conf
-        DESTINATION ${GLOBAL_CONFIG_DIR}
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/hxed
     )
 
     install(CODE "
